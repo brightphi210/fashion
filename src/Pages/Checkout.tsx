@@ -1,405 +1,407 @@
-import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
 import {
-    FiChevronRight, FiArrowLeft, FiLock, FiCheck,
-    FiUser, FiMail, FiPhone, FiMapPin,
-    FiClock, FiPackage, FiCopy, FiChevronDown,
+  FiCheck,
+  FiChevronDown,
+  FiChevronRight,
+  FiExternalLink,
+  FiLock,
+  FiMail,
+  FiMapPin,
+  FiSearch,
+  FiUser
 } from "react-icons/fi";
-import { HiOutlineTruck } from "react-icons/hi";
-import Navbar from "../component/Navbar";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Footer from "../component/Footer";
+import LoadingOverlay from "../component/LoadingOverlay";
+import Navbar from "../component/Navbar";
 import { useShop } from "../providers/ShopContext";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 type ShippingInfo = {
   firstName: string; lastName: string; email: string;
-  phone: string; address: string; city: string;
-  state: string; zip: string; country: string;
+  phoneCode: string; phoneNumber: string;
+  address: string; city: string; state: string; zip: string; country: string;
 };
-
-type FlutterwaveResponse = {
-  status: string; transaction_id?: number; tx_ref: string; flw_ref?: string;
+type StoredUser = {
+  id: number; first_name: string; last_name: string; full_name: string;
+  email: string; phone_number: string; is_email_verified: boolean; date_joined: string;
 };
+type DialCode = { name: string; dial_code: string; code: string; flag: string };
 
-const loadFlutterwaveScript = (): Promise<void> =>
-  new Promise((resolve) => {
-    if (document.getElementById("flutterwave-script")) { resolve(); return; }
-    const script = document.createElement("script");
-    script.id = "flutterwave-script";
-    script.src = "https://checkout.flutterwave.com/v3.js";
-    script.onload = () => resolve();
-    document.body.appendChild(script);
-  });
-
-const COUNTRIES = [
-  "United States","United Kingdom","Nigeria","Ghana","Kenya",
-  "South Africa","Canada","Australia","Germany","France",
-  "India","Brazil","UAE","Singapore","Netherlands",
-  "Italy","Spain","Sweden","Norway","Japan",
-];
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 const SHIPPING_OPTIONS = [
-  { id: "standard",  label: "Standard Shipping", sub: "5–7 business days", price: 0,     display: "Free"   },
-  { id: "express",   label: "Express Shipping",   sub: "2–3 business days", price: 9.99,  display: "$9.99"  },
-  { id: "overnight", label: "Overnight Shipping", sub: "Next business day", price: 24.99, display: "$24.99" },
+  { id: "standard", label: "Standard Shipping", sub: "5–7 business days", price: 0, display: "Free" },
+  { id: "express", label: "Express Shipping", sub: "2–3 business days", price: 9.99, display: "$9.99" },
 ];
 
-const COUNTRY_CURRENCY: Record<string, { code: string; symbol: string; rate: number }> = {
-  "United States":  { code: "USD", symbol: "$",   rate: 1      },
-  "United Kingdom": { code: "GBP", symbol: "£",   rate: 0.79   },
-  "Nigeria":        { code: "NGN", symbol: "₦",   rate: 1600   },
-  "Ghana":          { code: "GHS", symbol: "₵",   rate: 15.5   },
-  "Kenya":          { code: "KES", symbol: "KSh", rate: 130    },
-  "South Africa":   { code: "ZAR", symbol: "R",   rate: 18.5   },
-  "Canada":         { code: "CAD", symbol: "C$",  rate: 1.37   },
-  "Australia":      { code: "AUD", symbol: "A$",  rate: 1.54   },
-  "Germany":        { code: "EUR", symbol: "€",   rate: 0.92   },
-  "France":         { code: "EUR", symbol: "€",   rate: 0.92   },
-  "India":          { code: "INR", symbol: "₹",   rate: 83     },
-  "Brazil":         { code: "BRL", symbol: "R$",  rate: 5.1    },
-  "UAE":            { code: "AED", symbol: "د.إ", rate: 3.67   },
-  "Singapore":      { code: "SGD", symbol: "S$",  rate: 1.35   },
-  "Netherlands":    { code: "EUR", symbol: "€",   rate: 0.92   },
-  "Italy":          { code: "EUR", symbol: "€",   rate: 0.92   },
-  "Spain":          { code: "EUR", symbol: "€",   rate: 0.92   },
-  "Sweden":         { code: "SEK", symbol: "kr",  rate: 10.5   },
-  "Norway":         { code: "NOK", symbol: "kr",  rate: 10.7   },
-  "Japan":          { code: "JPY", symbol: "¥",   rate: 150    },
-};
-
-// Official Flutterwave test cards – https://developer.flutterwave.com/docs/integration-guides/testing-helpers
-const TEST_CARDS = [
-  {
-    flag: "🇬🇧", currency: "GBP", label: "UK Pounds — Visa",
-    number: "4187427415564246", expiry: "09/32", cvv: "828", pin: "3310", otp: "12345",
-    note: "International GBP card — select United Kingdom as your country",
-  },
-  {
-    flag: "🇺🇸", currency: "USD", label: "US Dollar — Mastercard",
-    number: "5531886652142950", expiry: "09/32", cvv: "564", pin: "3310", otp: "12345",
-    note: "USD international card",
-  },
-  {
-    flag: "🇳🇬", currency: "NGN", label: "Nigeria — Mastercard",
-    number: "5438898014560229", expiry: "10/31", cvv: "564", pin: "3310", otp: "12345",
-    note: "NGN — unlocks USSD, Bank Account & Bank Transfer tabs",
-  },
-  {
-    flag: "🇬🇭", currency: "GHS", label: "Ghana — Visa",
-    number: "4111111111111111", expiry: "01/26", cvv: "956", pin: "3310", otp: "12345",
-    note: "GHS — unlocks Mobile Money & Bank Transfer tabs",
-  },
-  {
-    flag: "🌍", currency: "Any", label: "3D Secure — Visa (triggers OTP)",
-    number: "4556052704172643", expiry: "01/31", cvv: "899", pin: "3310", otp: "12345",
-    note: "Use any currency — will ask for OTP: 12345",
-  },
+const DIAL_CODES: DialCode[] = [
+  { name: "Nigeria", dial_code: "+234", code: "NG", flag: "🇳🇬" },
+  { name: "United States", dial_code: "+1", code: "US", flag: "🇺🇸" },
+  { name: "United Kingdom", dial_code: "+44", code: "GB", flag: "🇬🇧" },
+  { name: "Ghana", dial_code: "+233", code: "GH", flag: "🇬🇭" },
+  { name: "Kenya", dial_code: "+254", code: "KE", flag: "🇰🇪" },
+  { name: "South Africa", dial_code: "+27", code: "ZA", flag: "🇿🇦" },
+  { name: "Canada", dial_code: "+1", code: "CA", flag: "🇨🇦" },
+  { name: "Australia", dial_code: "+61", code: "AU", flag: "🇦🇺" },
+  { name: "Germany", dial_code: "+49", code: "DE", flag: "🇩🇪" },
+  { name: "France", dial_code: "+33", code: "FR", flag: "🇫🇷" },
+  { name: "India", dial_code: "+91", code: "IN", flag: "🇮🇳" },
+  { name: "Brazil", dial_code: "+55", code: "BR", flag: "🇧🇷" },
+  { name: "UAE", dial_code: "+971", code: "AE", flag: "🇦🇪" },
+  { name: "Singapore", dial_code: "+65", code: "SG", flag: "🇸🇬" },
+  { name: "Japan", dial_code: "+81", code: "JP", flag: "🇯🇵" },
+  { name: "China", dial_code: "+86", code: "CN", flag: "🇨🇳" },
+  { name: "Pakistan", dial_code: "+92", code: "PK", flag: "🇵🇰" },
+  { name: "Egypt", dial_code: "+20", code: "EG", flag: "🇪🇬" },
 ];
 
-const PAYMENT_META: Record<string, { emoji: string; label: string }> = {
-  card:         { emoji: "💳", label: "Card"          },
-  applepay:     { emoji: "🍎", label: "Apple Pay"     },
-  mobilemoney:  { emoji: "📱", label: "Mobile Money"  },
-  ussd:         { emoji: "🔢", label: "USSD"          },
-  banktransfer: { emoji: "🏦", label: "Bank Transfer" },
-  account:      { emoji: "🏛️", label: "Bank Account"  },
+const getStoredUser = (): StoredUser | null => {
+  try { return JSON.parse(localStorage.getItem("user") ?? "null"); } catch { return null; }
+};
+const isValidPhone = (n: string) => /^\d{6,15}$/.test(n.replace(/[\s\-()]/g, ""));
+const parseStoredPhone = (raw: string): { code: string; local: string } => {
+  if (!raw) return { code: "+234", local: "" };
+  const sorted = [...DIAL_CODES].sort((a, b) => b.dial_code.length - a.dial_code.length);
+  for (const dc of sorted) {
+    if (raw.startsWith(dc.dial_code)) return { code: dc.dial_code, local: raw.slice(dc.dial_code.length) };
+  }
+  return { code: "+234", local: raw.replace(/^\+/, "") };
 };
 
-const TestCardsPanel = () => {
+// ─── Phone Code Dropdown ──────────────────────────────────────────────────────
+const PhoneCodeDropdown = ({ value, onChange }: { value: string; onChange: (c: string) => void }) => {
   const [open, setOpen] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
-  const copy = (text: string, key: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    });
-  };
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const selected = DIAL_CODES.find((d) => d.dial_code === value) ?? DIAL_CODES[0];
+  const filtered = DIAL_CODES.filter((d) =>
+    d.name.toLowerCase().includes(search.toLowerCase()) || d.dial_code.includes(search)
+  );
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
   return (
-    <div className="bg-gray-50 border border-dashed border-gray-300 rounded-2xl overflow-hidden mb-5">
+    <div ref={ref} className="relative shrink-0">
       <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left"
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="h-full flex items-center gap-1.5 px-3 text-sm font-medium min-w-[90px] bg-gray-50 border-r border-gray-200 rounded-l-xl text-gray-700"
       >
-        <div className="flex items-center gap-2">
-          <span className="text-base">🧪</span>
-          <div>
-            <p className="text-xs font-black text-gray-700">Test Mode — Sample Cards</p>
-            <p className="text-[10px] text-gray-400">Click to reveal • tap any value to copy</p>
-          </div>
-        </div>
-        <FiChevronDown
-          size={15}
-          className="text-gray-400 shrink-0 transition-transform duration-200"
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
-        />
+        <span className="text-base">{selected.flag}</span>
+        <span className="tabular-nums text-xs">{selected.dial_code}</span>
+        <FiChevronDown size={11} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="border-t border-dashed border-gray-300 divide-y divide-gray-200">
-          {TEST_CARDS.map((card) => (
-            <div key={card.number} className="px-4 py-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sm">{card.flag}</span>
-                  <p className="text-xs font-black text-gray-800">{card.label}</p>
-                </div>
-                <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full font-bold">{card.currency}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-1.5">
-                {[
-                  { label: "Card Number", val: card.number },
-                  { label: "Expiry",      val: card.expiry },
-                  { label: "CVV",         val: card.cvv    },
-                  { label: "PIN",         val: card.pin    },
-                  { label: "OTP",         val: card.otp    },
-                ].map(({ label, val }) => {
-                  const k = card.number + label;
-                  return (
-                    <button
-                      key={k}
-                      onClick={() => copy(val, k)}
-                      className="flex items-center justify-between bg-white border border-gray-200 hover:border-black rounded-lg px-2.5 py-1.5 text-left transition-colors group"
-                    >
-                      <div>
-                        <p className="text-[9px] text-gray-400 font-semibold uppercase tracking-wide leading-none mb-0.5">{label}</p>
-                        <p className="text-xs font-black text-black font-mono tracking-wider">{val}</p>
-                      </div>
-                      {copied === k
-                        ? <FiCheck size={11} className="text-green-500 shrink-0" />
-                        : <FiCopy  size={11} className="text-gray-300 group-hover:text-black shrink-0 transition-colors" />}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="text-[10px] text-gray-400 mt-1.5 italic">{card.note}</p>
+        <div className="absolute left-0 top-full mt-1 w-60 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+          <div className="p-2 border-b border-gray-100">
+            <div className="relative">
+              <FiSearch size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input autoFocus type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search…"
+                className="w-full pl-7 pr-3 py-1.5 text-xs rounded-lg outline-none border border-gray-200 bg-gray-50"
+              />
             </div>
-          ))}
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {filtered.map((d) => (
+              <button key={`${d.code}-${d.dial_code}`} type="button"
+                onClick={() => { onChange(d.dial_code); setOpen(false); setSearch(""); }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${d.dial_code === value ? "font-black bg-gray-50" : "font-normal"}`}
+              >
+                <span className="text-base w-5 shrink-0">{d.flag}</span>
+                <span className="flex-1 truncate text-gray-700">{d.name}</span>
+                <span className="text-xs text-gray-400 tabular-nums shrink-0">{d.dial_code}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
 };
 
-const Field = ({
-  label, value, onChange, placeholder, type = "text",
-  icon, required = true, colSpan = false,
-}: {
-  label: string; value: string; onChange: (v: string) => void;
+// ─── Field ────────────────────────────────────────────────────────────────────
+const Field = ({ label, value, onChange, placeholder, type = "text", icon, required = true, colSpan = false, error }: {
+  label: string; value: string; onChange?: (v: string) => void;
   placeholder: string; type?: string; icon?: React.ReactNode;
-  required?: boolean; colSpan?: boolean;
+  required?: boolean; colSpan?: boolean; error?: string;
 }) => (
   <div className={colSpan ? "sm:col-span-2" : ""}>
     <label className="text-xs font-black text-gray-700 mb-1.5 block">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     <div className="relative">
-      {icon && <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">{icon}</div>}
+      {icon && <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">{icon}</div>}
       <input
-        type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className={`w-full border border-gray-200 rounded-xl py-3 text-sm outline-none focus:border-black transition-colors ${icon ? "pl-10 pr-4" : "px-4"}`}
+        type={type} value={value}
+        onChange={(e) => onChange?.(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-xl py-2.5 text-sm outline-none border transition-colors bg-gray-50 text-gray-800 focus:bg-white"
+        style={{
+          paddingLeft: icon ? "2.5rem" : "1rem",
+          paddingRight: "1rem",
+          borderColor: error ? "#ef4444" : "#e5e7eb",
+        }}
+        onFocus={(e) => { (e.target as HTMLElement).style.borderColor = "#000"; }}
+        onBlur={(e) => { (e.target as HTMLElement).style.borderColor = error ? "#ef4444" : "#e5e7eb"; }}
       />
     </div>
+    {error && <p className="text-[11px] text-red-500 mt-1 font-medium">{error}</p>}
   </div>
 );
 
-const SuccessModal = ({
-  orderNum, total, currencySymbol, currencyCode, onContinue, onViewHistory,
-}: {
-  orderNum: string; total: string; currencySymbol: string;
-  currencyCode: string; onContinue: () => void; onViewHistory: () => void;
+// ─── Location Select ──────────────────────────────────────────────────────────
+const LocationSelect = ({ label, value, onChange, options, placeholder, required = true, loading = false, disabled = false }: {
+  label: string; value: string; onChange: (v: string) => void;
+  options: string[]; placeholder: string; required?: boolean; loading?: boolean; disabled?: boolean;
 }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
-    style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}>
-    <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl"
-      style={{ animation: "modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1)" }}>
-      <div className="bg-black pt-8 pb-10 flex flex-col items-center relative">
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-32 h-32 rounded-full border border-white/10" />
-          <div className="absolute w-24 h-24 rounded-full border border-white/15" />
-        </div>
-        <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-lg relative z-10">
-          <FiCheck size={30} className="text-black" strokeWidth={3} />
-        </div>
-        <p className="text-white font-black text-lg mt-4 relative z-10">Payment Successful!</p>
-        <p className="text-white/70 text-xs mt-1 relative z-10">Your order has been confirmed</p>
-      </div>
-      <div className="px-6 py-5">
-        <div className="text-center mb-5">
-          <p className="text-3xl font-black text-black">{currencySymbol}{total}</p>
-          <p className="text-xs text-gray-400 mt-0.5">{currencyCode}</p>
-        </div>
-        <div className="space-y-3 mb-6">
-          {[
-            { icon: <FiPackage size={14} />,       label: "Order Number", val: orderNum            },
-            { icon: <HiOutlineTruck size={15} />,  label: "Est. Delivery",val: "5–7 Business Days" },
-            { icon: <FiClock size={14} />,         label: "Status",       val: "Processing"        },
-          ].map(({ icon, label, val }) => (
-            <div key={label} className="flex items-center justify-between py-2.5 border-b border-gray-100 last:border-0">
-              <div className="flex items-center gap-2 text-gray-500">{icon}<span className="text-xs font-semibold">{label}</span></div>
-              <span className={`text-xs font-black ${label === "Status" ? "text-black bg-gray-100 px-2.5 py-1 rounded-full" : "text-black"}`}>{val}</span>
-            </div>
-          ))}
-        </div>
-        <div className="space-y-2.5">
-          <button onClick={onViewHistory}
-            className="w-full bg-black hover:bg-gray-800 text-white font-black py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
-            <FiClock size={15} /> View Transaction History
-          </button>
-          <button onClick={onContinue}
-            className="w-full border-2 border-gray-200 hover:border-black text-gray-700 hover:text-black font-black py-3 rounded-xl text-sm transition-colors">
-            Continue Shopping
-          </button>
-        </div>
-      </div>
+  <div>
+    <label className="text-xs font-black text-gray-700 mb-1.5 block">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="relative">
+      <select
+        value={value} onChange={(e) => onChange(e.target.value)}
+        disabled={disabled || loading || options.length === 0}
+        className="w-full rounded-xl px-4 py-2.5 text-sm outline-none border border-gray-200 bg-gray-50 text-gray-800 appearance-none transition-colors disabled:text-gray-400 focus:border-black"
+      >
+        <option value="">{loading ? "Loading…" : placeholder}</option>
+        {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+      </select>
+      <FiChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400" />
     </div>
-    <style>{`@keyframes modalIn { from { opacity:0; transform:scale(0.85) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }`}</style>
   </div>
 );
 
-const Checkout = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { cart, cartTotal, clearCart } = useShop();
-  const { discount = 0, couponCode = null } = (location.state as { discount?: number; couponCode?: string | null; }) ?? {};
+// ─── Step Badge ───────────────────────────────────────────────────────────────
+const StepBadge = ({ n }: { n: number }) => (
+  <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center text-xs font-black text-white shrink-0">{n}</div>
+);
 
+// ─── Checkout ─────────────────────────────────────────────────────────────────
+const Checkout = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { cart, cartTotal } = useShop();
+
+  const { discount = 0, couponCode = null } =
+    (location.state as { discount?: number; couponCode?: string | null }) ?? {};
+
+  const storedUser = getStoredUser();
+  const parsedPhone = parseStoredPhone(storedUser?.phone_number ?? "");
+
+  useEffect(() => {
+    if (!localStorage.getItem("sxiAccessToken"))
+      navigate("/login", { state: { from: "/checkout", locationState: location.state } });
+  }, []);
+
+  useEffect(() => { if (cart.length === 0) navigate("/cart"); }, [cart]);
+
+  const [countries, setCountries] = useState<string[]>([]);
+  const [states, setStates] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(true);
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
   const [shippingMethod, setShippingMethod] = useState(SHIPPING_OPTIONS[0]);
   const [info, setInfo] = useState<ShippingInfo>({
-    firstName: "", lastName: "", email: "", phone: "",
-    address: "", city: "", state: "", zip: "", country: "United States",
+    firstName: storedUser?.first_name ?? "", lastName: storedUser?.last_name ?? "",
+    email: storedUser?.email ?? "", phoneCode: parsedPhone.code, phoneNumber: parsedPhone.local,
+    address: "", city: "", state: "", zip: "", country: "",
   });
-  const [loading, setLoading]     = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [orderNum, setOrderNum]   = useState("");
-  const [paidTotal, setPaidTotal] = useState("");
-  const [txRef] = useState(`SHOP-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const currency   = COUNTRY_CURRENCY[info.country] ?? COUNTRY_CURRENCY["United States"];
-  const totalUSD   = cartTotal - discount + shippingMethod.price;
-  const totalLocal = parseFloat((totalUSD * currency.rate).toFixed(2));
-  const isValid    = info.firstName && info.lastName && info.email && info.phone && info.address && info.city && info.zip;
+  const totalUSD = parseFloat((cartTotal - discount + shippingMethod.price).toFixed(2));
 
-  // Build payment_options based on currency — only valid methods per currency are shown
-  const getPaymentOptions = (): string => {
-    const code = currency.code;
-    const opts: string[] = ["card"];
-    if (["USD","GBP","EUR"].includes(code))                             opts.push("applepay");
-    if (["NGN"].includes(code))                                         opts.push("account","ussd","banktransfer");
-    if (["GHS","KES","ZAR","UGX","RWF","ZMW","TZS"].includes(code))    opts.push("mobilemoney","banktransfer");
-    if (["USD","GBP","EUR","CAD","AUD"].includes(code) && !["NGN"].includes(code)) opts.push("banktransfer");
-    return [...new Set(opts)].join(",");
+  useEffect(() => {
+    setLoadingCountries(true);
+    fetch("https://countriesnow.space/api/v0.1/countries/positions")
+      .then((r) => r.json())
+      .then((d) => { if (!d.error && Array.isArray(d.data)) setCountries(d.data.map((c: { name: string }) => c.name).sort()); })
+      .catch(() => setCountries(["Nigeria", "United States", "United Kingdom", "Ghana", "Kenya", "South Africa", "Canada", "Australia"]))
+      .finally(() => setLoadingCountries(false));
+  }, []);
+
+  useEffect(() => {
+    if (!info.country) return;
+    setStates([]); setCities([]);
+    setInfo((p) => ({ ...p, state: "", city: "" }));
+    setLoadingStates(true);
+    fetch("https://countriesnow.space/api/v0.1/countries/states", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: info.country }),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (!d.error && d.data?.states) setStates(d.data.states.map((s: { name: string }) => s.name).sort()); })
+      .catch(() => setStates([]))
+      .finally(() => setLoadingStates(false));
+  }, [info.country]);
+
+  useEffect(() => {
+    if (!info.country || !info.state) return;
+    setCities([]);
+    setInfo((p) => ({ ...p, city: "" }));
+    setLoadingCities(true);
+    fetch("https://countriesnow.space/api/v0.1/countries/state/cities", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: info.country, state: info.state }),
+    })
+      .then((r) => r.json())
+      .then((d) => { if (!d.error && Array.isArray(d.data)) setCities(d.data.sort()); })
+      .catch(() => setCities([]))
+      .finally(() => setLoadingCities(false));
+  }, [info.state]);
+
+  const validatePhone = () => {
+    if (!info.phoneNumber.trim()) { setPhoneError("Phone number is required."); return false; }
+    if (!isValidPhone(info.phoneNumber)) { setPhoneError("Enter a valid phone number (6–15 digits)."); return false; }
+    setPhoneError(null); return true;
   };
 
-  const handlePayment = async () => {
-    if (!isValid) return;
-    setLoading(true);
+  const isFormValid =
+    info.firstName.trim() && info.lastName.trim() && info.email.trim() &&
+    info.phoneNumber.trim() && isValidPhone(info.phoneNumber) &&
+    info.address.trim() && info.country && info.zip.trim();
+
+  const handleCheckout = async () => {
+    if (!validatePhone() || !isFormValid || loading) return;
+    setLoading(true); setError(null);
     try {
-      await loadFlutterwaveScript();
-      // @ts-ignore
-      FlutterwaveCheckout({
-        public_key: "FLWPUBK_TEST-1846f466dad001520b9bf6345d69c9cb-X",
-        tx_ref: txRef,
-        amount: totalLocal,
-        currency: currency.code,
-        payment_options: getPaymentOptions(),
-        customer: { email: info.email, phone_number: info.phone, name: `${info.firstName} ${info.lastName}` },
-        customizations: {
-          title: "My Shop",
-          description: `Order for ${cart.length} item${cart.length !== 1 ? "s" : ""}`,
-          logo: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=100&q=80",
-        },
-        meta: {
-          shipping_address: `${info.address}, ${info.city}, ${info.state} ${info.zip}, ${info.country}`,
-          coupon: couponCode ?? "none",
-          items: cart.map((i) => `${i.name} x${i.quantity}`).join(", "),
-        },
-        callback: (response: FlutterwaveResponse) => {
-          if (response.status === "successful" || response.status === "completed") {
-            const num = `ORD-${response.transaction_id ?? Math.random().toString(36).slice(2,9).toUpperCase()}`;
-            try {
-              const existing = JSON.parse(localStorage.getItem("shop_transactions") ?? "[]");
-              localStorage.setItem("shop_transactions", JSON.stringify([{
-                id: num, txRef: response.tx_ref, flwRef: response.flw_ref,
-                date: new Date().toISOString(), status: "successful",
-                amount: totalLocal, currency: currency.code, currencySymbol: currency.symbol, amountUSD: totalUSD,
-                items: cart.map((item) => ({ id: item.id, name: item.name, img: item.img, price: item.price,
-                  quantity: item.quantity, selectedColor: item.selectedColor, selectedSize: item.selectedSize })),
-                shippingAddress: `${info.address}, ${info.city}, ${info.state} ${info.zip}, ${info.country}`,
-                shippingMethod: shippingMethod.label, coupon: couponCode ?? undefined,
-                email: info.email, name: `${info.firstName} ${info.lastName}`,
-              }, ...existing]));
-            } catch { /* silent */ }
-            setOrderNum(num);
-            setPaidTotal(totalLocal.toLocaleString());
-            clearCart();
-            setShowModal(true);
-          } else {
-            alert("Payment was not completed. Please try again.");
-          }
-          setLoading(false);
-        },
-        onclose: () => setLoading(false),
+      const token = localStorage.getItem("sxiAccessToken");
+      if (!token) { navigate("/login", { state: { from: "/checkout" } }); return; }
+      const fullPhone = `${info.phoneCode}${info.phoneNumber.replace(/^0+/, "")}`;
+      const res = await fetch(`${API_BASE}/api/payments/create-checkout-session/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          shipping_first_name: info.firstName, shipping_last_name: info.lastName,
+          shipping_email: info.email, shipping_phone: fullPhone,
+          shipping_street_address: info.address, shipping_city: info.city || info.state,
+          shipping_state: info.state, shipping_postal_code: info.zip,
+          shipping_country: info.country, shipping_method: shippingMethod.id,
+          coupon_code: couponCode ?? null, discount_amount: discount,
+          items: cart.map((item) => ({
+            product_id: item.id, name: item.name, image: item.img,
+            color: item.selectedColor ?? "", size: item.selectedSize ?? "",
+            quantity: item.quantity, price: item.price,
+          })),
+          success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/checkout`,
+        }),
       });
-    } catch (err) { console.error(err); setLoading(false); }
+      if (!res.headers.get("content-type")?.includes("application/json"))
+        throw new Error(`Unexpected server response (HTTP ${res.status}).`);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        if (res.status === 401) { localStorage.removeItem("sxiAccessToken"); localStorage.removeItem("user"); navigate("/login"); return; }
+        throw new Error(errData?.detail ?? `Server error (${res.status}).`);
+      }
+      const data = await res.json();
+      const checkoutUrl = data.checkout_url ?? data.url;
+      if (!checkoutUrl) throw new Error("No checkout URL returned from server.");
+      window.location.href = checkoutUrl;
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <Navbar />
-      {showModal && (
-        <SuccessModal orderNum={orderNum} total={paidTotal} currencySymbol={currency.symbol} currencyCode={currency.code}
-          onContinue={() => { setShowModal(false); navigate("/"); }}
-          onViewHistory={() => { setShowModal(false); navigate("/transactions"); }} />
-      )}
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
-          <Link to="/" className="hover:text-red-600 transition-colors font-medium">Home</Link>
-          <FiChevronRight size={13} className="text-gray-400" />
-          <Link to="/cart" className="hover:text-red-600 transition-colors font-medium">Cart</Link>
-          <FiChevronRight size={13} className="text-gray-400" />
+      <LoadingOverlay visible={loading} />
+
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-6">
+          <Link to="/" className="hover:text-black transition-colors font-medium">Home</Link>
+          <FiChevronRight size={13} />
+          <Link to="/cart" className="hover:text-black transition-colors font-medium">Cart</Link>
+          <FiChevronRight size={13} />
           <span className="font-bold text-gray-800">Checkout</span>
         </nav>
+
         <h1 className="text-xl font-black text-black mb-6">Checkout</h1>
-        <div className="flex flex-col lg:flex-row gap-6">
 
-          {/* LEFT */}
-          <div className="flex-1 space-y-5">
+        <div className="flex flex-col lg:flex-row gap-5">
 
-            {/* 1 Shipping */}
+          {/* ── LEFT ── */}
+          <div className="flex-1 space-y-4">
+
+            {/* Step 1 — Shipping */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-5">
-                <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-black shrink-0">1</div>
+                <StepBadge n={1} />
                 <h2 className="font-black text-base text-black">Shipping Details</h2>
+                {storedUser && (
+                  <span className="ml-auto text-[10px] text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <FiCheck size={9} /> Pre-filled
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="First Name"        value={info.firstName} onChange={(v) => setInfo({...info,firstName:v})} placeholder="John"                  icon={<FiUser size={14} />} />
-                <Field label="Last Name"          value={info.lastName}  onChange={(v) => setInfo({...info,lastName:v})}  placeholder="Doe"                   icon={<FiUser size={14} />} />
-                <Field label="Email Address"      value={info.email}     onChange={(v) => setInfo({...info,email:v})}     placeholder="john@example.com" type="email" icon={<FiMail size={14} />} />
-                <Field label="Phone Number"       value={info.phone}     onChange={(v) => setInfo({...info,phone:v})}     placeholder="+1 234 567 890" type="tel" icon={<FiPhone size={14} />} />
-                <Field label="Street Address"     value={info.address}   onChange={(v) => setInfo({...info,address:v})}   placeholder="123 Main Street" icon={<FiMapPin size={14} />} colSpan />
-                <Field label="City"               value={info.city}      onChange={(v) => setInfo({...info,city:v})}      placeholder="New York" />
-                <Field label="State / Province"   value={info.state}     onChange={(v) => setInfo({...info,state:v})}     placeholder="NY" required={false} />
-                <Field label="ZIP / Postal Code"  value={info.zip}       onChange={(v) => setInfo({...info,zip:v})}       placeholder="10001" />
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-black text-gray-700 mb-1.5 block">Country <span className="text-red-500">*</span></label>
-                  <select value={info.country} onChange={(e) => setInfo({...info,country:e.target.value})}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-black transition-colors bg-white">
-                    {COUNTRIES.map((c) => <option key={c}>{c}</option>)}
-                  </select>
-                  <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
-                    💱 Charged in <strong className="text-gray-600">{currency.code}</strong> ({currency.symbol})
-                  </p>
+                <Field label="First Name" value={info.firstName} onChange={(v) => setInfo({ ...info, firstName: v })} placeholder="John" icon={<FiUser size={13} />} />
+                <Field label="Last Name" value={info.lastName} onChange={(v) => setInfo({ ...info, lastName: v })} placeholder="Doe" icon={<FiUser size={13} />} />
+                <Field label="Email Address" value={info.email} onChange={(v) => setInfo({ ...info, email: v })} placeholder="john@example.com" type="email" icon={<FiMail size={13} />} />
+
+                {/* Phone */}
+                <div>
+                  <label className="text-xs font-black text-gray-700 mb-1.5 block">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className={`flex rounded-xl overflow-visible border ${phoneError ? "border-red-400" : "border-gray-200"} focus-within:border-black transition-colors`}>
+                    <PhoneCodeDropdown value={info.phoneCode} onChange={(c) => setInfo((p) => ({ ...p, phoneCode: c }))} />
+                    <input
+                      type="tel" value={info.phoneNumber}
+                      onChange={(e) => { setInfo((p) => ({ ...p, phoneNumber: e.target.value })); if (phoneError) setPhoneError(null); }}
+                      onBlur={validatePhone}
+                      placeholder="8012345678"
+                      className="flex-1 px-3 py-2.5 text-sm outline-none rounded-r-xl bg-gray-50 text-gray-800 border-l border-gray-200 min-w-0"
+                    />
+                  </div>
+                  {phoneError && <p className="text-[11px] text-red-500 mt-1 font-medium">{phoneError}</p>}
+                  {!phoneError && info.phoneNumber && isValidPhone(info.phoneNumber) && (
+                    <p className="text-[11px] text-green-600 mt-1 font-medium flex items-center gap-1">
+                      <FiCheck size={10} /> {info.phoneCode} {info.phoneNumber.replace(/^0+/, "")}
+                    </p>
+                  )}
                 </div>
+
+                <Field label="Street Address" value={info.address} onChange={(v) => setInfo({ ...info, address: v })} placeholder="123 Main Street" icon={<FiMapPin size={13} />} colSpan />
+
+                <div className="sm:col-span-2">
+                  <LocationSelect label="Country" value={info.country} onChange={(v) => setInfo({ ...info, country: v })}
+                    options={countries} placeholder={loadingCountries ? "Loading…" : "Select country"} loading={loadingCountries} />
+                </div>
+                <LocationSelect label="State / Province" value={info.state} onChange={(v) => setInfo({ ...info, state: v })}
+                  options={states} placeholder={info.country ? (loadingStates ? "Loading…" : "Select state") : "Select country first"}
+                  loading={loadingStates} disabled={!info.country} required={false} />
+                <LocationSelect label="City" value={info.city} onChange={(v) => setInfo({ ...info, city: v })}
+                  options={cities} placeholder={info.state ? (loadingCities ? "Loading…" : "Select city") : "Select state first"}
+                  loading={loadingCities} disabled={!info.state} />
+                <Field label="ZIP / Postal Code" value={info.zip} onChange={(v) => setInfo({ ...info, zip: v })} placeholder="10001" />
               </div>
             </div>
 
-            {/* 2 Shipping method */}
+            {/* Step 2 — Shipping Method */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-black shrink-0">2</div>
+                <StepBadge n={2} />
                 <h2 className="font-black text-base text-black">Shipping Method</h2>
               </div>
               <div className="space-y-2">
                 {SHIPPING_OPTIONS.map((opt) => (
                   <button key={opt.id} onClick={() => setShippingMethod(opt)}
-                    className={`w-full flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all text-left ${shippingMethod.id === opt.id ? "border-black bg-black/[0.02]" : "border-gray-100 hover:border-gray-300"}`}>
+                    className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all text-left border-2 ${shippingMethod.id === opt.id ? "border-black bg-black/[0.02]" : "border-gray-100 hover:border-gray-300"
+                      }`}
+                  >
                     <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${shippingMethod.id === opt.id ? "border-black" : "border-gray-300"}`}>
                       {shippingMethod.id === opt.id && <div className="w-2 h-2 rounded-full bg-black" />}
                     </div>
@@ -407,97 +409,62 @@ const Checkout = () => {
                       <p className="text-sm font-bold text-gray-900">{opt.label}</p>
                       <p className="text-xs text-gray-400">{opt.sub}</p>
                     </div>
-                    <span className={`text-sm font-black shrink-0 ${opt.price === 0 ? "text-green-600" : "text-black"}`}>{opt.display}</span>
+                    <span className={`text-sm font-black shrink-0 ${opt.price === 0 ? "text-green-600" : "text-gray-900"}`}>
+                      {opt.display}
+                    </span>
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* 3 Payment */}
+            {/* Step 3 — Payment */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-xs font-black shrink-0">3</div>
-                <h2 className="font-black text-base text-black">Payment</h2>
-              </div>
 
-              <TestCardsPanel />
-
-              <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl p-4 mb-4">
-                <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center shrink-0">
-                  <span className="text-white font-black text-xs">FW</span>
-                </div>
-                <div>
-                  <p className="text-sm font-black text-gray-900">Secured by Flutterwave</p>
-                  <p className="text-xs text-gray-500">Options shown based on selected country/currency</p>
-                </div>
-              </div>
-
-              {/* Dynamic options preview */}
-              <div className="mb-5">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Available for {currency.code}</p>
-                <div className="flex flex-wrap gap-2">
-                  {getPaymentOptions().split(",").map((opt) => {
-                    const meta = PAYMENT_META[opt.trim()];
-                    if (!meta) return null;
-                    return (
-                      <div key={opt} className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5">
-                        <span className="text-sm">{meta.emoji}</span>
-                        <span className="text-xs font-bold text-gray-700">{meta.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-                {["USD","GBP","EUR"].includes(currency.code) && (
-                  <p className="text-[10px] text-gray-400 mt-2">🍎 Apple Pay appears on Safari/iOS only</p>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 text-xs text-gray-400 mb-5">
-                <FiLock size={12} className="text-black shrink-0" />
-                <span>256-bit SSL encrypted. Your payment details are never stored.</span>
-              </div>
-
-              <button onClick={handlePayment} disabled={!isValid || loading}
-                className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-black text-sm transition-all ${
-                  !isValid ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  : loading ? "bg-black text-white opacity-70 cursor-wait"
-                  : "bg-black hover:bg-gray-800 text-white"}`}>
-                {loading ? (
-                  <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Opening payment…</>
-                ) : (
-                  <><FiLock size={15} />Pay {currency.symbol}{totalLocal.toLocaleString()} {currency.code}</>
-                )}
+              <button
+                onClick={handleCheckout}
+                disabled={!isFormValid || loading}
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-black text-sm transition-all bg-black text-white hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                {loading
+                  ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Redirecting…</>
+                  : <><FiLock size={14} /> Pay ${totalUSD.toFixed(2)} USD <FiExternalLink size={12} className="opacity-60" /></>
+                }
               </button>
-
-              {!isValid && <p className="text-xs text-red-400 text-center mt-2">Please fill in all required fields above.</p>}
-
-              <Link to="/cart" className="flex items-center justify-center gap-1.5 text-sm text-gray-500 hover:text-black font-semibold transition-colors mt-3">
-                <FiArrowLeft size={13} /> Back to Cart
-              </Link>
             </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="lg:w-80 shrink-0">
+          {/* ── RIGHT — Order Summary ── */}
+          <div className="lg:w-72 shrink-0">
             <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-24">
               <h2 className="font-black text-sm text-black mb-4">Order Summary</h2>
+
               <div className="space-y-3 mb-4 max-h-52 overflow-y-auto">
                 {cart.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3">
+                  <div key={`${item.id}-${item.selectedColor}-${item.selectedSize}`} className="flex items-center gap-3">
                     <div className="relative shrink-0">
-                      <img src={item.img} alt={item.name} className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
-                      <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-black text-white text-[9px] rounded-full flex items-center justify-center font-black">{item.quantity}</span>
+                      <img src={item.img} alt={item.name} className="w-11 h-11 rounded-lg object-cover bg-gray-100" />
+                      <span className="absolute top-1 -right-2 w-4 h-4 bg-black border border-white text-white text-[9px] rounded-full flex items-center justify-center font-black">
+                        {item.quantity}
+                      </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-gray-800 truncate">{item.name}</p>
-                      {item.selectedColor && <p className="text-[10px] text-gray-400">{item.selectedColor}{item.selectedSize ? ` · ${item.selectedSize}` : ""}</p>}
+                      <p className="text-xs font-bold text-gray-900 truncate">{item.name}</p>
+                      {item.selectedColor && (
+                        <p className="text-[10px] text-gray-400">{item.selectedColor}{item.selectedSize ? ` · ${item.selectedSize}` : ""}</p>
+                      )}
                     </div>
-                    <span className="text-xs font-black text-black shrink-0">${(item.price * item.quantity).toFixed(2)}</span>
+                    <span className="text-xs font-black text-gray-900 shrink-0">
+                      ${(Number(item.price) * item.quantity).toFixed(2)}
+                    </span>
                   </div>
                 ))}
               </div>
-              <div className="border-t border-gray-100 pt-3 space-y-2">
-                <div className="flex justify-between text-sm"><span className="text-gray-500">Subtotal</span><span className="font-semibold">${cartTotal.toFixed(2)}</span></div>
+
+              <div className="space-y-2 pt-3 border-t border-gray-100">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Subtotal</span>
+                  <span className="font-semibold text-gray-800">${cartTotal.toFixed(2)}</span>
+                </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-green-600 font-semibold">Coupon ({couponCode})</span>
@@ -506,24 +473,20 @@ const Checkout = () => {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Shipping</span>
-                  <span className={`font-semibold ${shippingMethod.price === 0 ? "text-green-600" : "text-black"}`}>
+                  <span className={`font-semibold ${shippingMethod.price === 0 ? "text-green-600" : "text-gray-800"}`}>
                     {shippingMethod.price === 0 ? "Free" : `$${shippingMethod.price.toFixed(2)}`}
                   </span>
                 </div>
-                <div className="border-t border-gray-100 pt-2.5 flex justify-between">
-                  <span className="font-black text-black">Total (USD)</span>
-                  <span className="font-black text-black">${totalUSD.toFixed(2)}</span>
+                <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
+                  <span className="font-black text-black">Total</span>
+                  <span className="font-black text-lg text-black">${totalUSD.toFixed(2)} USD</span>
                 </div>
-                {currency.code !== "USD" && (
-                  <div className="flex justify-between text-xs bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
-                    <span className="text-gray-600 font-semibold">Charged as</span>
-                    <span className="font-black text-black">{currency.symbol}{totalLocal.toLocaleString()} {currency.code}</span>
-                  </div>
-                )}
               </div>
-              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-center gap-2 text-gray-400">
-                <FiLock size={11} /><span className="text-[10px]">Payments secured by</span>
-                <span className="text-[10px] font-black text-black">Flutterwave</span>
+
+              <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-center gap-1.5 text-gray-400">
+                <FiLock size={11} />
+                <span className="text-[10px]">Secured by</span>
+                <span className="text-[10px] font-black text-[#635BFF]">Stripe</span>
               </div>
             </div>
           </div>

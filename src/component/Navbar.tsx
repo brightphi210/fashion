@@ -1,18 +1,29 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-    FiSearch, FiShoppingCart, FiUser, FiMenu, FiX, FiHeart,
-    FiChevronDown, FiTrash2, FiPlus, FiMinus,
+  FiChevronDown,
+  FiHeart,
+  FiMenu,
+  FiMinus,
+  FiPackage,
+  FiPlus,
+  FiSearch,
+  FiShoppingCart,
+  FiTrash2,
+  FiX,
 } from "react-icons/fi";
-import { Link } from "react-router-dom";
-import { categories } from "../data/Data";
+import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/six.jpg";
+import { categories } from "../data/Data";
 import { useShop } from "../providers/ShopContext";
 
 const Navbar = () => {
-  const [menuOpen, setMenuOpen]     = useState(false);
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdown] = useState(false);
-  const [cartOpen, setCartOpen]     = useState(false);
-  const [scrolled, setScrolled]     = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { cartCount, cartTotal, cart, removeFromCart, updateQuantity, favouriteCount } = useShop();
@@ -23,13 +34,11 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Lock body scroll when any panel is open
   useEffect(() => {
     document.body.style.overflow = menuOpen || cartOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen, cartOpen]);
 
-  // Close category dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
@@ -41,9 +50,28 @@ const Navbar = () => {
 
   const closeAll = () => { setMenuOpen(false); setCartOpen(false); };
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    setSearchQuery("");
+  };
+
+  const handleMobileSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mobileSearchQuery.trim()) return;
+    navigate(`/search?q=${encodeURIComponent(mobileSearchQuery.trim())}`);
+    setMobileSearchQuery("");
+    setMenuOpen(false);
+  };
+
+  const handleCategoryClick = (slug: string) => {
+    navigate(`/search?q=${encodeURIComponent(slug)}`);
+    setDropdown(false);
+  };
+
   return (
     <>
-      {/* ── NAV BAR ── */}
       <nav
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
@@ -54,7 +82,7 @@ const Navbar = () => {
           boxShadow: scrolled ? "0 2px 20px rgba(0,0,0,0.08)" : "none",
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-4">
 
           {/* LEFT */}
           <div className="flex items-center gap-4 flex-1">
@@ -71,7 +99,10 @@ const Navbar = () => {
                 Category
                 <FiChevronDown
                   size={14}
-                  style={{ transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}
+                  style={{
+                    transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s ease",
+                  }}
                 />
               </button>
               <div
@@ -84,31 +115,54 @@ const Navbar = () => {
                 }}
               >
                 {categories.map((cat) => (
-                  <Link
+                  <button
                     key={cat.slug}
-                    to={`/category/${cat.slug}`}
-                    onClick={() => setDropdown(false)}
-                    className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
+                    onClick={() => handleCategoryClick(cat.slug)}
+                    className="w-full text-left block px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
                   >
                     {cat.label}
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>
 
             {/* Search — desktop */}
-            <div className="hidden md:flex flex-1 max-w-sm items-center bg-black/5 rounded-full px-4 py-2 gap-2">
+            <form
+              onSubmit={handleSearchSubmit}
+              className="hidden md:flex flex-1 max-w-sm items-center bg-black/5 rounded-full px-4 py-2 gap-2 focus-within:bg-black/8 focus-within:ring-1 focus-within:ring-black/10 transition-all"
+            >
               <FiSearch className="text-gray-400 shrink-0" size={15} />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search products..."
                 className="bg-transparent text-sm outline-none w-full text-gray-700 placeholder-gray-400"
               />
-            </div>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="text-gray-300 hover:text-gray-500 transition-colors"
+                >
+                  <FiX size={13} />
+                </button>
+              )}
+            </form>
           </div>
 
           {/* RIGHT — desktop */}
           <div className="hidden md:flex items-center gap-1 shrink-0">
+            {/* Order History */}
+            <Link
+              to="/orders"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 hover:text-red-600 transition-colors rounded-lg hover:bg-black/5 whitespace-nowrap"
+            >
+              <FiPackage size={16} />
+              Orders
+            </Link>
+
+            {/* Favourites */}
             <Link
               to="/favourites"
               className="relative p-2.5 text-gray-600 hover:text-red-600 transition-colors rounded-lg hover:bg-black/5"
@@ -120,9 +174,8 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
-            <Link to="/login" className="p-2.5 text-gray-600 hover:text-red-600 transition-colors rounded-lg hover:bg-black/5">
-              <FiUser size={20} />
-            </Link>
+
+            {/* Cart */}
             <button
               onClick={() => { setMenuOpen(false); setCartOpen((v) => !v); }}
               className="relative p-2.5 text-black bg-black/10 hover:bg-black hover:text-white rounded-full cursor-pointer transition-all duration-200 ml-1"
@@ -161,10 +214,9 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Spacer */}
       <div className="h-16" />
 
-      {/* ── SHARED BACKDROP (covers full screen for both drawers) ── */}
+      {/* BACKDROP */}
       <div
         onClick={closeAll}
         style={{
@@ -179,7 +231,7 @@ const Navbar = () => {
         }}
       />
 
-      {/* ── CART DRAWER (slide from right — works on ALL screen sizes) ── */}
+      {/* CART DRAWER */}
       <div
         style={{
           position: "fixed",
@@ -196,7 +248,6 @@ const Navbar = () => {
           transition: "transform 0.35s cubic-bezier(0.4,0,0.2,1)",
         }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-5 shrink-0" style={{ height: 64, borderBottom: "1px solid #f0f0f0" }}>
           <div className="flex items-center gap-2">
             <FiShoppingCart size={18} className="text-black" />
@@ -213,7 +264,6 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Empty state */}
         {cart.length === 0 ? (
           <div className="flex flex-col items-center justify-center flex-1 text-gray-400 px-6">
             <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
@@ -230,7 +280,6 @@ const Navbar = () => {
           </div>
         ) : (
           <>
-            {/* Items list */}
             <div className="flex-1 overflow-y-auto" style={{ borderBottom: "1px solid #f0f0f0" }}>
               {cart.map((item) => (
                 <div
@@ -245,7 +294,6 @@ const Navbar = () => {
                       className="w-14 h-14 rounded-xl object-cover bg-gray-100 hover:opacity-80 transition-opacity"
                     />
                   </Link>
-
                   <div className="flex-1 min-w-0">
                     <Link to={`/product/${item.id}`} onClick={() => setCartOpen(false)}>
                       <p className="text-xs font-bold text-gray-900 truncate hover:text-red-600 transition-colors mb-0.5">
@@ -259,7 +307,6 @@ const Navbar = () => {
                       ${(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
-
                   <div className="flex flex-col items-end gap-2.5 shrink-0">
                     <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-red-500 transition-colors">
                       <FiTrash2 size={14} />
@@ -283,8 +330,6 @@ const Navbar = () => {
                 </div>
               ))}
             </div>
-
-            {/* Footer */}
             <div className="px-5 py-4 bg-gray-50 shrink-0">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-gray-500">Subtotal ({cartCount} item{cartCount !== 1 ? "s" : ""})</span>
@@ -312,7 +357,7 @@ const Navbar = () => {
         )}
       </div>
 
-      {/* ── MOBILE MENU DRAWER ── */}
+      {/* MOBILE MENU DRAWER */}
       <div
         style={{
           position: "fixed",
@@ -338,14 +383,21 @@ const Navbar = () => {
         </div>
 
         <div className="px-5 py-4">
-          <div className="flex items-center bg-gray-100 rounded-full px-4 py-2 gap-2">
-            <FiSearch className="text-gray-400" size={15} />
+          <form onSubmit={handleMobileSearchSubmit} className="flex items-center bg-gray-100 rounded-full px-4 py-2 gap-2">
+            <FiSearch className="text-gray-400 shrink-0" size={15} />
             <input
               type="text"
-              placeholder="Search..."
+              value={mobileSearchQuery}
+              onChange={(e) => setMobileSearchQuery(e.target.value)}
+              placeholder="Search products..."
               className="bg-transparent text-sm outline-none w-full text-gray-700 placeholder-gray-400"
             />
-          </div>
+            {mobileSearchQuery ? (
+              <button type="submit" className="text-gray-500 hover:text-black">
+                <FiSearch size={13} />
+              </button>
+            ) : null}
+          </form>
         </div>
 
         <div className="px-5 pb-2 overflow-y-auto flex-1">
@@ -353,10 +405,12 @@ const Navbar = () => {
           <ul className="space-y-0.5">
             {categories.map((cat, i) => (
               <li key={cat.slug}>
-                <Link
-                  to={`/category/${cat.slug}`}
-                  onClick={() => setMenuOpen(false)}
-                  className="block px-3 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-red-50 hover:text-red-600 transition-colors text-sm"
+                <button
+                  onClick={() => {
+                    navigate(`/search?q=${encodeURIComponent(cat.slug)}`);
+                    setMenuOpen(false);
+                  }}
+                  className="w-full text-left block px-3 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-red-50 hover:text-red-600 transition-colors text-sm"
                   style={{
                     opacity: menuOpen ? 1 : 0,
                     transform: menuOpen ? "translateX(0)" : "translateX(20px)",
@@ -364,7 +418,7 @@ const Navbar = () => {
                   }}
                 >
                   {cat.label}
-                </Link>
+                </button>
               </li>
             ))}
           </ul>
@@ -372,13 +426,13 @@ const Navbar = () => {
 
         <div className="mx-5 my-2 border-t border-gray-100" />
 
-        <div className="px-5 flex flex-col gap-1 pb-2">
+        <div className="px-5 flex flex-col gap-1 pb-6">
           <Link
-            to="/login"
+            to="/orders"
             onClick={() => setMenuOpen(false)}
             className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium"
           >
-            <FiUser size={17} /> My Account
+            <FiPackage size={17} /> Order History
           </Link>
           <Link
             to="/favourites"
@@ -392,16 +446,6 @@ const Navbar = () => {
                 {favouriteCount}
               </span>
             )}
-          </Link>
-        </div>
-
-        <div className="px-5 pb-8 pt-3">
-          <Link
-            to="/login"
-            onClick={() => setMenuOpen(false)}
-            className="block w-full text-center bg-black text-white py-3 rounded-xl font-black text-sm hover:bg-red-600 transition-colors"
-          >
-            Sign Up / Login
           </Link>
         </div>
       </div>

@@ -1,219 +1,169 @@
-import { useState, useRef } from "react";
-import { FiHeart, FiChevronLeft, FiChevronRight, FiShoppingCart } from "react-icons/fi";
+import { useRef } from "react";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { HiOutlineFire } from "react-icons/hi";
-import { Link } from "react-router-dom";
-import Navbar from "../component/Navbar";
+import { useNavigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Footer from "../component/Footer";
-import { categories, products } from "../data/Data";
-import { useShop } from "../providers/ShopContext";
-
-
-// ─── Product Card ─────────────────────────────────────────────────────────────
-
-const ProductCard = ({ product }: { product: (typeof products)[0] }) => {
-  const { toggleFavourite, isFavourite, addToCart, isInCart } = useShop();
-  const liked = isFavourite(product.id);
-  const inCart = isInCart(product.id);
-
-  return (
-    <Link
-      to={`/product/${product.id}`}
-      className="group bg-white rounded-xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 block"
-    >
-      <div className="relative overflow-hidden bg-gray-50" style={{ aspectRatio: "1/1" }}>
-        <img
-          src={product.img}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-        />
-        {product.tag && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-md">
-            {product.tag}
-          </span>
-        )}
-        {/* Favourite button */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleFavourite(product);
-          }}
-          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition-transform"
-        >
-          <FiHeart
-            size={15}
-            className={liked ? "fill-red-500 text-red-500" : "text-gray-400"}
-          />
-        </button>
-
-        {/* Add to cart overlay on hover */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            addToCart(product);
-          }}
-          className={`absolute bottom-0 left-0 right-0 py-2 text-xs font-black flex items-center justify-center gap-1.5 transition-all duration-300 ${
-            inCart
-              ? "bg-green-500 text-white translate-y-0 opacity-100"
-              : "bg-black text-white translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
-          }`}
-        >
-          <FiShoppingCart size={13} />
-          {inCart ? "Added to Cart" : "Add to Cart"}
-        </button>
-      </div>
-      <div className="p-3">
-        <p className="text-sm font-bold text-gray-900 truncate">{product.name}</p>
-        <div className="flex items-center gap-2 mt-1.5">
-          <span className="text-sm font-black text-black">${product.price.toFixed(2)}</span>
-          {product.oldPrice && (
-            <span className="text-xs text-gray-400 line-through">${product.oldPrice.toFixed(2)}</span>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-};
-
-// ─── Home ─────────────────────────────────────────────────────────────────────
+import Navbar from "../component/Navbar";
+import ProductCard, { ProductCardSkeleton } from "../component/ProductCard";
+import { useGetCategories, useGetProducts } from "../hooks/mutations/allMutation";
 
 const Home = () => {
-  const [activeBanner, setActiveBanner] = useState(0);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-  const banners = [
-    {
-      title: "50% off for",
-      subtitle: "clothing and shoes",
-      bg: "https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1200&q=80",
-    },
-    {
-      title: "New Season",
-      subtitle: "arrivals are here",
-      bg: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=1200&q=80",
-    },
-    {
-      title: "Flash Sale",
-      subtitle: "up to 70% off today",
-      bg: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=1200&q=80",
-    },
-  ];
+  const { categories, isLoading: isCategoriesLoading } = useGetCategories();
+  const rawCategories = categories?.data ?? [];
+  const allCategories: any[] = Array.isArray(rawCategories) ? rawCategories : [];
+
+  const { products, isLoading: isProductsLoading } = useGetProducts();
+  const rawProducts = products?.data ?? [];
+  const allProducts: any[] = Array.isArray(rawProducts) ? rawProducts : [];
 
   const scrollCategories = (dir: "left" | "right") => {
     categoryScrollRef.current?.scrollBy({
-      left: dir === "left" ? -220 : 220,
+      left: dir === "left" ? -180 : 180,
       behavior: "smooth",
     });
+  };
+
+  const handleFilterClick = (filter: string) => {
+    navigate(`/search?q=${encodeURIComponent(filter.toLowerCase())}`);
   };
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <Navbar />
+      <ToastContainer
+        position="top-right"
+        autoClose={3500}
+        hideProgressBar={true}
+        newestOnTop
+        closeOnClick
+        pauseOnHover
+        theme="light"
+      />
 
-      <div className="max-w-7xl mx-auto px-4 pb-0">
 
-        {/* ── Hero Banner ── */}
-        <div className="relative rounded-2xl overflow-hidden mb-8 mt-4" style={{ height: "240px" }}>
-          {banners.map((b, i) => (
-            <div
-              key={i}
-              className="absolute inset-0 transition-all duration-700"
-              style={{ opacity: activeBanner === i ? 1 : 0, zIndex: activeBanner === i ? 1 : 0 }}
-            >
-              <div
-                className="w-full h-full"
-                style={{
-                  background: `linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%), url(${b.bg}) center/cover no-repeat`,
-                }}
-              />
-              <div className="absolute inset-0 flex flex-col justify-center pl-8">
-                <p className="text-white text-2xl font-black leading-tight drop-shadow-lg">
-                  {b.title}<br />{b.subtitle}
-                </p>
-                <Link
-                  to="/category/clothing"
-                  className="mt-4 w-fit bg-red-600 hover:bg-red-700 text-white font-black px-5 py-2.5 rounded-xl text-sm transition-colors shadow-lg"
-                >
-                  Shop Now
-                </Link>
-              </div>
-            </div>
-          ))}
-
-          <div className="absolute bottom-3 left-8 flex gap-2 z-10">
-            {banners.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveBanner(i)}
-                className={`rounded-full transition-all duration-300 ${
-                  activeBanner === i ? "w-5 h-2 bg-white" : "w-2 h-2 bg-white/50"
-                }`}
-              />
-            ))}
-          </div>
-
-          <button
-            className="absolute right-12 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
-            onClick={() => setActiveBanner((v) => (v - 1 + banners.length) % banners.length)}
-          >
-            <FiChevronLeft size={16} />
-          </button>
-          <button
-            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-colors"
-            onClick={() => setActiveBanner((v) => (v + 1) % banners.length)}
-          >
-            <FiChevronRight size={16} />
-          </button>
-        </div>
+      <div className="max-w-5xl mx-auto px-4 pb-0">
 
         {/* ── Browse By Category ── */}
-        <section className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-black text-black">Browse By Category</h2>
+        <section className="mb-10 pt-10">
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <h2
+                className="text-xl font-extrabold text-black tracking-tight leading-none"
+                style={{ fontFamily: "'Syne', sans-serif" }}
+              >
+                Shop by Category
+              </h2>
+              <p className="text-xs text-gray-400 mt-1 font-normal">
+                Find exactly what you're looking for
+              </p>
+            </div>
             <div className="flex gap-2">
               <button
                 onClick={() => scrollCategories("left")}
-                className="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-red-500 hover:text-red-600 transition-colors"
+                className="w-8 h-8 rounded-full border-[1.5px] border-gray-200 bg-white flex items-center justify-center hover:border-black hover:bg-black hover:text-white transition-all duration-200 text-gray-600"
               >
-                <FiChevronLeft size={15} />
+                <FiChevronLeft size={13} />
               </button>
               <button
                 onClick={() => scrollCategories("right")}
-                className="w-8 h-8 rounded-full border-2 border-gray-200 flex items-center justify-center hover:border-red-500 hover:text-red-600 transition-colors"
+                className="w-8 h-8 rounded-full border-[1.5px] border-gray-200 bg-white flex items-center justify-center hover:border-black hover:bg-black hover:text-white transition-all duration-200 text-gray-600"
               >
-                <FiChevronRight size={15} />
+                <FiChevronRight size={13} />
               </button>
             </div>
           </div>
 
-          <div
-            ref={categoryScrollRef}
-            className="flex gap-2 overflow-x-auto pb-2"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                to={`/category/${cat.slug}`}
-                className="group flex flex-col items-center lg:w-35.5 w-26 gap-2 shrink-0 cursor-pointer"
-              >
-                <div
-                  className="w-full rounded-xl overflow-hidden border-2 border-transparent transition-all duration-200"
-                  style={{ aspectRatio: "1/1" }}
-                >
-                  <img
-                    src={cat.img}
-                    alt={cat.label}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    loading="lazy"
+          <div className="relative">
+            <div
+              ref={categoryScrollRef}
+              className="flex gap-2.5 overflow-x-auto pb-2"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {isCategoriesLoading
+                ? [...Array(7)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="shrink-0 rounded-xl overflow-hidden animate-pulse bg-gray-200"
+                    style={{ width: 88, aspectRatio: "3/4" }}
                   />
-                </div>
-                <span className="text-xs font-bold text-gray-700 group-hover:text-red-600 transition-colors text-center">
-                  {cat.label}
-                </span>
-              </Link>
+                ))
+                : allCategories
+                  .filter((cat: any) => cat && typeof cat === "object" && cat.slug)
+                  .map((cat: any) => (
+                    <button
+                      key={cat.slug}
+                      onClick={() => navigate(`/search?q=${encodeURIComponent(cat.slug)}`)}
+                      className="group shrink-0 rounded-xl overflow-hidden cursor-pointer block text-left"
+                      style={{
+                        width: 88,
+                        transition: "transform 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+                      }}
+                      onMouseEnter={(e) =>
+                        ((e.currentTarget as HTMLElement).style.transform = "translateY(-3px)")
+                      }
+                      onMouseLeave={(e) =>
+                        ((e.currentTarget as HTMLElement).style.transform = "translateY(0)")
+                      }
+                    >
+                      <div
+                        className="relative overflow-hidden bg-gray-100"
+                        style={{ aspectRatio: "3/4" }}
+                      >
+                        <img
+                          src={cat.img}
+                          alt={cat.label}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            background:
+                              "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 55%)",
+                          }}
+                        />
+                        <span
+                          className="absolute bottom-2 left-0 right-0 text-center text-white text-[10px] font-bold px-1 tracking-wide"
+                          style={{
+                            fontFamily: "'Syne', sans-serif",
+                            textShadow: "0 1px 4px rgba(0,0,0,0.4)",
+                          }}
+                        >
+                          {cat.label}
+                        </span>
+                        {cat.count && (
+                          <span className="absolute top-1.5 right-1.5 bg-white/90 text-black text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none">
+                            {cat.count}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+            </div>
+
+            <div
+              className="absolute right-0 top-0 bottom-2 w-12 pointer-events-none z-10"
+              style={{
+                background: "linear-gradient(to right, transparent, #f9fafb)",
+              }}
+            />
+          </div>
+
+          {/* Quick Filter Pills */}
+          <div className="flex gap-2 flex-wrap mt-4">
+            {["All", "New In", "Sale", "Trending", "Under $50"].map((filter) => (
+              <button
+                key={filter}
+                onClick={() => handleFilterClick(filter === "All" ? "" : filter)}
+                className="px-3.5 py-1.5 rounded-full text-xs font-medium border-[1.5px] border-gray-200 bg-white text-gray-500 hover:bg-black hover:border-black hover:text-white transition-all duration-150"
+              >
+                {filter}
+              </button>
             ))}
           </div>
         </section>
@@ -224,10 +174,13 @@ const Home = () => {
             <HiOutlineFire className="text-red-500" size={22} />
             <h2 className="text-lg font-black text-black">New Arrival</h2>
           </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+            {isProductsLoading
+              ? [...Array(8)].map((_, i) => <ProductCardSkeleton key={i} />)
+              : allProducts.map((product: any) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
           </div>
         </section>
       </div>

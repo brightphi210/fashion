@@ -1,14 +1,22 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import {
-    FiTrash2, FiPlus, FiMinus, FiChevronRight,
-    FiShoppingCart, FiTag, FiCheck, FiArrowLeft,
+  FiArrowLeft,
+  FiCheck,
+  FiChevronRight,
+  FiMinus,
+  FiPlus,
+  FiShoppingCart,
+  FiTag,
+  FiTrash2,
 } from "react-icons/fi";
 import {
-    HiOutlineTruck, HiOutlineShieldCheck, HiOutlineCreditCard,
+  HiOutlineCreditCard,
+  HiOutlineShieldCheck,
+  HiOutlineTruck,
 } from "react-icons/hi";
-import { useState } from "react";
-import Navbar from "../component/Navbar";
+import { Link } from "react-router-dom";
 import Footer from "../component/Footer";
+import Navbar from "../component/Navbar";
 import { useShop } from "../providers/ShopContext";
 
 const Cart = () => {
@@ -27,17 +35,17 @@ const Cart = () => {
     return (
       <div className="bg-gray-50 min-h-screen">
         <Navbar />
-        <div className="max-w-5xl mx-auto px-4 py-6">
-          <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
-            <Link to="/" className="hover:text-red-600 transition-colors font-medium">Home</Link>
-            <FiChevronRight size={13} className="text-gray-400" />
+        <div className="max-w-5xl mx-auto px-4 py-8">
+          <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-6">
+            <Link to="/" className="hover:text-black transition-colors font-medium">Home</Link>
+            <FiChevronRight size={13} />
             <span className="font-bold text-gray-800">Cart</span>
           </nav>
           <div className="bg-white rounded-2xl border border-gray-100 flex flex-col items-center justify-center py-28 text-center px-4">
-            <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-5">
-              <FiShoppingCart size={36} className="text-gray-300" />
+            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-5">
+              <FiShoppingCart size={32} className="text-gray-300" />
             </div>
-            <h2 className="text-xl font-black text-gray-800 mb-2">Your cart is empty</h2>
+            <h2 className="text-lg font-black text-gray-800 mb-2">Your cart is empty</h2>
             <p className="text-sm text-gray-400 mb-8 max-w-xs">
               Looks like you haven't added anything yet. Browse our collection and find something you love.
             </p>
@@ -58,11 +66,11 @@ const Cart = () => {
     <div className="bg-gray-50 min-h-screen">
       <Navbar />
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
+      <div className="max-w-5xl mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
-          <Link to="/" className="hover:text-red-600 transition-colors font-medium">Home</Link>
-          <FiChevronRight size={13} className="text-gray-400" />
+        <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-6">
+          <Link to="/" className="hover:text-black transition-colors font-medium">Home</Link>
+          <FiChevronRight size={13} />
           <span className="font-bold text-gray-800">Cart</span>
         </nav>
 
@@ -71,12 +79,12 @@ const Cart = () => {
           <span className="text-gray-400 font-semibold text-base">({cartCount} items)</span>
         </h1>
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-5">
 
-          {/* ── LEFT: Items + Coupon ── */}
+          {/* ── LEFT ── */}
           <div className="flex-1 space-y-4">
 
-            {/* Items list */}
+            {/* Items */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
               <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
                 <h2 className="font-black text-sm text-black">Cart Items</h2>
@@ -91,16 +99,14 @@ const Cart = () => {
               <div className="divide-y divide-gray-50">
                 {cart.map((item) => (
                   <div key={item.id} className="flex items-center gap-4 px-5 py-4">
-                    {/* Image */}
                     <Link to={`/product/${item.id}`} className="shrink-0">
                       <img
                         src={item.img}
                         alt={item.name}
-                        className="w-18 h-18 w-16 h-16 rounded-xl object-cover bg-gray-100 hover:opacity-80 transition-opacity"
+                        className="w-16 h-16 rounded-xl object-cover bg-gray-100 hover:opacity-80 transition-opacity"
                       />
                     </Link>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <Link to={`/product/${item.id}`}>
                         <p className="text-sm font-bold text-gray-900 truncate hover:text-red-600 transition-colors">
@@ -120,39 +126,37 @@ const Cart = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-sm font-black text-black">${item.price.toFixed(2)}</span>
+                        <span className="text-sm font-black text-black">${Number(item.price).toLocaleString()}</span>
                         {item.oldPrice && (
-                          <span className="text-xs text-gray-400 line-through">${item.oldPrice.toFixed(2)}</span>
+                          <span className="text-xs text-gray-400 line-through">${Number(item.oldPrice).toLocaleString()}</span>
                         )}
                       </div>
                     </div>
 
-                    {/* Qty + Remove */}
                     <div className="flex flex-col items-end gap-2.5 shrink-0">
                       <button
                         onClick={() => removeFromCart(item.id)}
                         className="text-gray-300 hover:text-red-500 transition-colors"
-                        title="Remove"
                       >
-                        <FiTrash2 size={15} />
+                        <FiTrash2 size={14} />
                       </button>
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center hover:border-red-400 hover:text-red-600 transition-colors"
+                          className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center hover:border-black hover:text-black transition-colors"
                         >
                           <FiMinus size={10} />
                         </button>
                         <span className="w-6 text-center text-sm font-black">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center hover:border-red-400 hover:text-red-600 transition-colors"
+                          className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center hover:border-black hover:text-black transition-colors"
                         >
                           <FiPlus size={10} />
                         </button>
                       </div>
-                      <span className="text-xs font-black text-gray-700">
-                        ${(item.price * item.quantity).toFixed(2)}
+                      <span className="text-xs font-black text-gray-800">
+                        ${(Number(item.price) * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -163,7 +167,7 @@ const Cart = () => {
             {/* Coupon */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-3">
-                <FiTag size={16} className="text-gray-500" />
+                <FiTag size={15} className="text-gray-400" />
                 <span className="text-sm font-black text-black">Coupon Code</span>
               </div>
               <div className="flex gap-2">
@@ -178,18 +182,17 @@ const Cart = () => {
                 <button
                   onClick={handleApplyCoupon}
                   disabled={couponApplied || !coupon}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-black transition-colors ${
-                    couponApplied
-                      ? "bg-green-500 text-white"
-                      : "bg-black hover:bg-red-600 text-white disabled:bg-gray-200 disabled:text-gray-400"
-                  }`}
+                  className={`px-4 py-2.5 rounded-xl text-sm font-black transition-colors ${couponApplied
+                    ? "bg-green-500 text-white"
+                    : "bg-black hover:bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400"
+                    }`}
                 >
-                  {couponApplied ? <FiCheck size={16} /> : "Apply"}
+                  {couponApplied ? <FiCheck size={15} /> : "Apply"}
                 </button>
               </div>
               {couponApplied && (
                 <p className="text-xs text-green-600 font-bold mt-2 flex items-center gap-1">
-                  <FiCheck size={12} /> Coupon "SAVE10" applied — 10% off!
+                  <FiCheck size={11} /> Coupon "SAVE10" applied — 10% off!
                 </p>
               )}
               <p className="text-xs text-gray-400 mt-2">
@@ -197,24 +200,23 @@ const Cart = () => {
               </p>
             </div>
 
-            {/* Continue shopping */}
             <Link
               to="/"
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-black font-semibold transition-colors"
+              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-black font-semibold transition-colors"
             >
               <FiArrowLeft size={13} /> Continue Shopping
             </Link>
           </div>
 
-          {/* ── RIGHT: Order Summary ── */}
-          <div className="lg:w-80 shrink-0">
+          {/* ── RIGHT: Summary ── */}
+          <div className="lg:w-72 shrink-0">
             <div className="bg-white rounded-2xl border border-gray-100 p-5 sticky top-24">
               <h2 className="font-black text-sm text-black mb-4">Order Summary</h2>
 
               <div className="space-y-2.5 mb-5">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Subtotal ({cartCount} items)</span>
-                  <span className="font-semibold">${cartTotal.toFixed(2)}</span>
+                  <span className="font-semibold text-gray-800">${cartTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Shipping</span>
@@ -226,13 +228,12 @@ const Cart = () => {
                     <span className="font-semibold text-green-600">-${discount.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="border-t border-gray-100 pt-3 flex justify-between">
+                <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
                   <span className="font-black text-black">Total</span>
-                  <span className="font-black text-xl text-black">${finalTotal.toFixed(2)}</span>
+                  <span className="font-black text-lg text-black">${finalTotal.toFixed(2)}</span>
                 </div>
               </div>
 
-              {/* Pass discount & final total via state to checkout */}
               <Link
                 to="/checkout"
                 state={{ discount, finalTotal, couponCode: couponApplied ? "SAVE10" : null }}
@@ -244,12 +245,12 @@ const Cart = () => {
               {/* Trust badges */}
               <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-2">
                 {[
-                  { icon: <HiOutlineTruck size={18} />,       label: "Free Delivery" },
-                  { icon: <HiOutlineShieldCheck size={18} />, label: "Secure Pay" },
-                  { icon: <HiOutlineCreditCard size={18} />,  label: "Easy Returns" },
+                  { icon: <HiOutlineTruck size={16} />, label: "Free Delivery" },
+                  { icon: <HiOutlineShieldCheck size={16} />, label: "Secure Pay" },
+                  { icon: <HiOutlineCreditCard size={16} />, label: "Easy Returns" },
                 ].map(({ icon, label }) => (
                   <div key={label} className="flex flex-col items-center gap-1 text-center">
-                    <div className="text-gray-500">{icon}</div>
+                    <div className="text-gray-400">{icon}</div>
                     <span className="text-[10px] text-gray-400 font-semibold leading-tight">{label}</span>
                   </div>
                 ))}

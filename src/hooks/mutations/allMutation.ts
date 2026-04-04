@@ -145,3 +145,13 @@ export const useUpdateOrderStatus = () => {
 
   return updateOrderStatus
 }
+
+
+export const useNewsletterSubscribe = () => {
+  const subscribe = useMutation({
+    mutationFn: async (email: string) => {
+      return post_requests('newsletter/subscribe/', { email }, '')
+    },
+  })
+  return subscribe
+}

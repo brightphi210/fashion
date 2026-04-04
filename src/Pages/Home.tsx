@@ -4,6 +4,7 @@ import { HiOutlineFire } from "react-icons/hi";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import EmailCaptureModal from "../component/EmailCaptureModal";
 import Footer from "../component/Footer";
 import Navbar from "../component/Navbar";
 import ProductCard, { ProductCardSkeleton } from "../component/ProductCard";
@@ -35,6 +36,7 @@ const Home = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <Navbar />
+      <EmailCaptureModal />
       <ToastContainer
         position="top-right"
         autoClose={3500}

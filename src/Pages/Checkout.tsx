@@ -31,8 +31,7 @@ type DialCode = { name: string; dial_code: string; code: string; flag: string };
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 const SHIPPING_OPTIONS = [
-  { id: "standard", label: "Standard Shipping", sub: "5–7 business days", price: 0, display: "Free" },
-  { id: "express", label: "Express Shipping", sub: "2–3 business days", price: 9.99, display: "$9.99" },
+  { id: "standard", label: "Standard Shipping", sub: "5–7 business days", price: 6.00, display: "$6.00" },
 ];
 
 const DIAL_CODES: DialCode[] = [
@@ -409,7 +408,7 @@ const Checkout = () => {
                       <p className="text-sm font-bold text-gray-900">{opt.label}</p>
                       <p className="text-xs text-gray-400">{opt.sub}</p>
                     </div>
-                    <span className={`text-sm font-black shrink-0 ${opt.price === 0 ? "text-green-600" : "text-gray-900"}`}>
+                    <span className="text-sm font-black shrink-0 text-gray-900">
                       {opt.display}
                     </span>
                   </button>
@@ -419,7 +418,11 @@ const Checkout = () => {
 
             {/* Step 3 — Payment */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
-
+              {error && (
+                <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-medium">
+                  {error}
+                </div>
+              )}
               <button
                 onClick={handleCheckout}
                 disabled={!isFormValid || loading}
@@ -473,8 +476,8 @@ const Checkout = () => {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Shipping</span>
-                  <span className={`font-semibold ${shippingMethod.price === 0 ? "text-green-600" : "text-gray-800"}`}>
-                    {shippingMethod.price === 0 ? "Free" : `$${shippingMethod.price.toFixed(2)}`}
+                  <span className="font-semibold text-gray-800">
+                    ${shippingMethod.price.toFixed(2)}
                   </span>
                 </div>
                 <div className="pt-2 border-t border-gray-100 flex justify-between items-center">

@@ -1,19 +1,11 @@
-import { useState } from "react";
 import {
   FiArrowLeft,
-  FiCheck,
   FiChevronRight,
   FiMinus,
   FiPlus,
   FiShoppingCart,
-  FiTag,
   FiTrash2,
 } from "react-icons/fi";
-import {
-  HiOutlineCreditCard,
-  HiOutlineShieldCheck,
-  HiOutlineTruck,
-} from "react-icons/hi";
 import { Link } from "react-router-dom";
 import Footer from "../component/Footer";
 import Navbar from "../component/Navbar";
@@ -21,15 +13,6 @@ import { useShop } from "../providers/ShopContext";
 
 const Cart = () => {
   const { cart, removeFromCart, updateQuantity, cartTotal, cartCount, clearCart } = useShop();
-  const [coupon, setCoupon] = useState("");
-  const [couponApplied, setCouponApplied] = useState(false);
-
-  const discount = couponApplied ? parseFloat((cartTotal * 0.1).toFixed(2)) : 0;
-  const finalTotal = cartTotal - discount;
-
-  const handleApplyCoupon = () => {
-    if (coupon.toUpperCase() === "SAVE10") setCouponApplied(true);
-  };
 
   if (cart.length === 0) {
     return (
@@ -164,42 +147,6 @@ const Cart = () => {
               </div>
             </div>
 
-            {/* Coupon */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <FiTag size={15} className="text-gray-400" />
-                <span className="text-sm font-black text-black">Coupon Code</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={coupon}
-                  onChange={(e) => setCoupon(e.target.value.toUpperCase())}
-                  placeholder="Enter coupon code..."
-                  disabled={couponApplied}
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-black transition-colors disabled:bg-gray-50 disabled:text-gray-400 font-medium"
-                />
-                <button
-                  onClick={handleApplyCoupon}
-                  disabled={couponApplied || !coupon}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-black transition-colors ${couponApplied
-                    ? "bg-green-500 text-white"
-                    : "bg-black hover:bg-red-600 text-white disabled:bg-gray-100 disabled:text-gray-400"
-                    }`}
-                >
-                  {couponApplied ? <FiCheck size={15} /> : "Apply"}
-                </button>
-              </div>
-              {couponApplied && (
-                <p className="text-xs text-green-600 font-bold mt-2 flex items-center gap-1">
-                  <FiCheck size={11} /> Coupon "SAVE10" applied — 10% off!
-                </p>
-              )}
-              <p className="text-xs text-gray-400 mt-2">
-                Try code: <strong className="text-gray-600">SAVE10</strong>
-              </p>
-            </div>
-
             <Link
               to="/"
               className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-black font-semibold transition-colors"
@@ -222,39 +169,19 @@ const Cart = () => {
                   <span className="text-gray-500">Shipping</span>
                   <span className="font-semibold text-green-600">Free</span>
                 </div>
-                {couponApplied && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-green-600 font-semibold">Coupon (SAVE10)</span>
-                    <span className="font-semibold text-green-600">-${discount.toFixed(2)}</span>
-                  </div>
-                )}
                 <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
                   <span className="font-black text-black">Total</span>
-                  <span className="font-black text-lg text-black">${finalTotal.toFixed(2)}</span>
+                  <span className="font-black text-lg text-black">${cartTotal.toFixed(2)}</span>
                 </div>
               </div>
 
               <Link
                 to="/checkout"
-                state={{ discount, finalTotal, couponCode: couponApplied ? "SAVE10" : null }}
+                state={{ finalTotal: cartTotal }}
                 className="block w-full text-center bg-black hover:bg-red-600 text-white font-black py-3 rounded-xl text-sm transition-colors mb-3"
               >
                 Proceed to Checkout
               </Link>
-
-              {/* Trust badges */}
-              <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-2">
-                {[
-                  { icon: <HiOutlineTruck size={16} />, label: "Free Delivery" },
-                  { icon: <HiOutlineShieldCheck size={16} />, label: "Secure Pay" },
-                  { icon: <HiOutlineCreditCard size={16} />, label: "Easy Returns" },
-                ].map(({ icon, label }) => (
-                  <div key={label} className="flex flex-col items-center gap-1 text-center">
-                    <div className="text-gray-400">{icon}</div>
-                    <span className="text-[10px] text-gray-400 font-semibold leading-tight">{label}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>

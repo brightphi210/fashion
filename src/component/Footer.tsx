@@ -1,34 +1,41 @@
-import { Link } from "react-router-dom";
+import { FiInstagram, FiPhone } from "react-icons/fi";
 
 const Footer = () => (
-  <footer className="bg-black text-white mt-16">
-    <div className="max-w-5xl mx-auto px-4 py-12 flex justify-between gap-8">
+  <footer className="bg-white border-t border-gray-100 mt-auto">
+    <div className="max-w-5xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+
       {/* Brand */}
-      <div>
-        <div className="flex items-center gap-1.5 mb-3">
-          <span className="text-lg font-black tracking-tight">6ix</span>
-        </div>
-        <p className="text-gray-400 text-sm leading-relaxed">
-          Your go-to destination for modern fashion. <br /> Style, quality, and value — all in one place.
-        </p>
+      <span className="text-base font-black tracking-tight text-black">6ix</span>
+
+      {/* Links */}
+      <div className="flex items-center gap-5">
+        <a
+          href="https://www.instagram.com/6ixxunit?igsh=OG80bWhwbnZ1c3c1&utm_source=qr"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-black transition-colors font-medium"
+        >
+          <FiInstagram size={15} />
+          @6ix
+        </a>
+
+        <a
+          href="https://wa.me/2341234567"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-black transition-colors font-medium"
+        >
+          <FiPhone size={14} />
+          +234 123 4567
+        </a>
       </div>
 
-      {/* Help */}
-      <div>
-        <h4 className="font-black text-sm uppercase tracking-widest mb-4 text-red-500">Help</h4>
-        <ul className=" space-y-1 text-sm text-gray-400">
-          {["FAQs", "Contact Us"].map((item) => (
-            <li key={item}>
-              <Link to="#" className="hover:text-white transition-colors">
-                {item}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
+      {/* Copyright */}
+      <p className="text-xs text-gray-400">
+        © {new Date().getFullYear()} 6ix. All rights reserved.
+      </p>
     </div>
-
   </footer>
 );
 
-export default Footer
+export default Footer;

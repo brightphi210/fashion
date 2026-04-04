@@ -41,3 +41,16 @@ body {
     transform: rotate(0deg) scale(1);
   }
 }
+
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

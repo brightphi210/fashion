@@ -13,8 +13,20 @@ import {
 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import logo from "../assets/six.jpg";
-import { categories } from "../data/Data";
 import { useShop } from "../providers/ShopContext";
+
+// ── Static fallback categories matching your admin (Hats, Hoodies, Longsleeves, New, Pants, Shorts, T-Shirts)
+const FALLBACK_CATEGORIES = [
+  { label: "Hats", slug: "hats" },
+  { label: "Hoodies", slug: "hoodies" },
+  { label: "Longsleeves", slug: "longsleeves" },
+  { label: "New", slug: "new" },
+  { label: "Pants", slug: "pants" },
+  { label: "Shorts", slug: "shorts" },
+  { label: "T-Shirts", slug: "t-shirts" },
+];
+
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -24,9 +36,24 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileSearchQuery, setMobileSearchQuery] = useState("");
+  const [navCategories, setNavCategories] = useState(FALLBACK_CATEGORIES);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { cartCount, cartTotal, cart, removeFromCart, updateQuantity, favouriteCount } = useShop();
+
+  // Fetch categories from backend
+  useEffect(() => {
+    fetch(`${API_BASE}/api/categories/`)
+      .then((r) => r.json())
+      .then((data: { label: string; slug: string }[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setNavCategories(data);
+        }
+      })
+      .catch(() => {
+        // silently keep fallback
+      });
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -114,7 +141,7 @@ const Navbar = () => {
                   transition: "opacity 0.2s ease, transform 0.2s ease",
                 }}
               >
-                {categories.map((cat) => (
+                {navCategories.map((cat) => (
                   <button
                     key={cat.slug}
                     onClick={() => handleCategoryClick(cat.slug)}
@@ -153,7 +180,6 @@ const Navbar = () => {
 
           {/* RIGHT — desktop */}
           <div className="hidden md:flex items-center gap-1 shrink-0">
-            {/* Order History */}
             <Link
               to="/orders"
               className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 hover:text-red-600 transition-colors rounded-lg hover:bg-black/5 whitespace-nowrap"
@@ -162,7 +188,6 @@ const Navbar = () => {
               Orders
             </Link>
 
-            {/* Favourites */}
             <Link
               to="/favourites"
               className="relative p-2.5 text-gray-600 hover:text-red-600 transition-colors rounded-lg hover:bg-black/5"
@@ -175,7 +200,6 @@ const Navbar = () => {
               )}
             </Link>
 
-            {/* Cart */}
             <button
               onClick={() => { setMenuOpen(false); setCartOpen((v) => !v); }}
               className="relative p-2.5 text-black bg-black/10 hover:bg-black hover:text-white rounded-full cursor-pointer transition-all duration-200 ml-1"
@@ -403,7 +427,7 @@ const Navbar = () => {
         <div className="px-5 pb-2 overflow-y-auto flex-1">
           <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Categories</p>
           <ul className="space-y-0.5">
-            {categories.map((cat, i) => (
+            {navCategories.map((cat, i) => (
               <li key={cat.slug}>
                 <button
                   onClick={() => {

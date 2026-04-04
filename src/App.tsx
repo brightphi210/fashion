@@ -30,6 +30,7 @@ const App = () => {
   return (
     <AuthProvider>
       <ShopProvider>
+        {/* <CurrencyProvider> */}
         <BrowserRouter>
           <Routes>
             <Route path='/' element={<Home />} />
@@ -63,6 +64,7 @@ const App = () => {
             />
           </Routes>
         </BrowserRouter>
+        {/* </CurrencyProvider> */}
       </ShopProvider>
 
     </AuthProvider>

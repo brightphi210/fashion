@@ -347,11 +347,11 @@ const Favourite = () => {
 
                       <div className="flex items-baseline gap-2 mb-3">
                         <span className="text-base font-extrabold text-black" style={{ letterSpacing: "-0.02em" }}>
-                          ${Number(product.price).toFixed(2)}
+                          €{Number(product.price).toFixed(2)}
                         </span>
                         {product.oldPrice && (
                           <span className="text-xs text-gray-300 line-through" style={{ fontFamily: "'Epilogue', sans-serif" }}>
-                            ${Number(product.oldPrice).toFixed(2)}
+                            €{Number(product.oldPrice).toFixed(2)}
                           </span>
                         )}
                         {product.discount && (

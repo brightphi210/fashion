@@ -16,6 +16,7 @@ const SideBar = ({ isOpen = true, onClose }: SideBarProps) => {
   const handleLogout = () => {
     localStorage.removeItem('sxiAccessToken');
     navigate('/login');
+
   };
 
   // Close sidebar on mobile when clicking a link
@@ -23,6 +24,7 @@ const SideBar = ({ isOpen = true, onClose }: SideBarProps) => {
     if (onClose && window.innerWidth < 768) {
       onClose();
     }
+    setIsCollapsed(false); // Expand sidebar when a link is clicked
   };
 
   return (

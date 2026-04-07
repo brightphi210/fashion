@@ -109,9 +109,9 @@ const Cart = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-sm font-black text-black">${Number(item.price).toLocaleString()}</span>
+                        <span className="text-sm font-black text-black">€{Number(item.price).toLocaleString()}</span>
                         {item.oldPrice && (
-                          <span className="text-xs text-gray-400 line-through">${Number(item.oldPrice).toLocaleString()}</span>
+                          <span className="text-xs text-gray-400 line-through">€{Number(item.oldPrice).toLocaleString()}</span>
                         )}
                       </div>
                     </div>
@@ -139,7 +139,7 @@ const Cart = () => {
                         </button>
                       </div>
                       <span className="text-xs font-black text-gray-800">
-                        ${(Number(item.price) * item.quantity).toFixed(2)}
+                        €{(Number(item.price) * item.quantity).toFixed(2)}
                       </span>
                     </div>
                   </div>
@@ -163,7 +163,7 @@ const Cart = () => {
               <div className="space-y-2.5 mb-5">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Subtotal ({cartCount} items)</span>
-                  <span className="font-semibold text-gray-800">${cartTotal.toFixed(2)}</span>
+                  <span className="font-semibold text-gray-800">€{cartTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Shipping</span>
@@ -171,7 +171,7 @@ const Cart = () => {
                 </div>
                 <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
                   <span className="font-black text-black">Total</span>
-                  <span className="font-black text-lg text-black">${cartTotal.toFixed(2)}</span>
+                  <span className="font-black text-lg text-black">€{cartTotal.toFixed(2)}</span>
                 </div>
               </div>
 

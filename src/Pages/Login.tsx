@@ -65,7 +65,9 @@ const Login = () => {
 
                 toast.success("Login successful!");
                 loginForm.reset();
-                setTimeout(() => navigate("/admin/overview"), 1200);
+                const redirectTo = res.user.is_staff ? "/admin/overview" : "/checkout";
+                setTimeout(() => navigate(redirectTo), 1200);
+                // setTimeout(() => navigate("/admin/overview"), 1200);
             },
             onError: (error: any) => {
                 const err = error?.response?.data;

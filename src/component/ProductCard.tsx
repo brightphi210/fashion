@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useShop } from "../providers/ShopContext";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
 
 const getMediaUrl = (path: string) => {
     if (!path) return "";
@@ -150,9 +150,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
                 <div className="flex items-center justify-between gap-2 mt-1">
                     <div className="flex items-baseline gap-1.5">
-                        <span className="text-sm font-black text-black">${price.toFixed(2)}</span>
+                        <span className="text-sm font-black text-black">€{price.toFixed(2)}</span>
                         {oldPrice && (
-                            <span className="text-[11px] text-gray-300 line-through">${oldPrice.toFixed(2)}</span>
+                            <span className="text-[11px] text-gray-300 line-through">€{oldPrice.toFixed(2)}</span>
                         )}
                     </div>
                     {discount && (

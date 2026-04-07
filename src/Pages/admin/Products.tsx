@@ -13,7 +13,7 @@ import { HiOutlineFire } from "react-icons/hi";
 import AddEditProductModal from "../../component/AddEditProductModal";
 import { useDeleteProduct, useGetProducts } from "../../hooks/mutations/allMutation";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://api.6ixunit.store";
 const getMediaUrl = (path: any) => {
     if (!path || typeof path !== "string") return "";
     if (path.startsWith("http")) return path;
@@ -65,8 +65,8 @@ const ProductDetailModal = ({ product, onClose, onEdit }: { product: any; onClos
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         {[
-                            { label: "Price", val: `$${price.toFixed(2)}` },
-                            { label: "Old Price", val: oldPrice ? `$${oldPrice.toFixed(2)}` : "—" },
+                            { label: "Price", val: `€${price.toFixed(2)}` },
+                            { label: "Old Price", val: oldPrice ? `€${oldPrice.toFixed(2)}` : "—" },
                             { label: "Category", val: safeStr(product.category) || "—" },
                             { label: "Tag", val: safeStr(product.tag) || "—" },
                             { label: "Status", val: product.is_available ? "Available" : "Unavailable" },
@@ -170,8 +170,8 @@ const ProductCard = ({ product, onView, onEdit, onDelete }: { product: any; onVi
                 <p className="text-xs font-black text-gray-800 line-clamp-2 leading-tight flex-1">{safeStr(product.name)}</p>
                 <div className="flex items-center justify-between mt-2.5">
                     <div className="flex items-baseline gap-1.5">
-                        <span className="text-sm font-black text-gray-900">${price.toFixed(2)}</span>
-                        {oldPrice && <span className="text-[10px] text-gray-300 line-through">${oldPrice.toFixed(2)}</span>}
+                        <span className="text-sm font-black text-gray-900">€{price.toFixed(2)}</span>
+                        {oldPrice && <span className="text-[10px] text-gray-300 line-through">€{oldPrice.toFixed(2)}</span>}
                     </div>
                     <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full border ${product.is_available ? "text-green-600 bg-green-50 border-green-200" : "text-gray-400 bg-gray-50 border-gray-200"}`}>
                         {product.is_available ? "Active" : "Off"}

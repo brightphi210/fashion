@@ -193,7 +193,7 @@ const OrderSuccess = () => {
                                 { icon: <FiPackage size={15} />, label: "Order Number", value: order?.order_number ?? "—", highlight: true },
                                 { icon: <HiOutlineTruck size={16} />, label: "Estimated Delivery", value: deliveryEstimate() },
                                 { icon: <FiClock size={15} />, label: "Status", value: "Processing", badge: true },
-                            ].map(({ icon, label, value, highlight, badge }) => (
+                            ].map(({ icon, label, value, badge }) => (
                                 <div key={label} className="flex items-center justify-between py-2.5" style={{ borderBottom: `1px solid ${divider}` }}>
                                     <div className="flex items-center gap-2" style={{ color: textMuted }}>
                                         {icon}

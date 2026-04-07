@@ -10,13 +10,6 @@ interface DashboardNavbarProps {
 }
 
 const DashboardNavbar = ({ onToggleSidebar }: DashboardNavbarProps) => {
-
-    // const { profile, isLoading } = useProfile()
-    // const userProfile = profile?.data || {}
-    const userProfile = '' as any
-    // const { notifications: notificationsData, isLoading: isNotificationsLoading } = useGetNotifications();
-    // const notifications = notificationsData?.data?.notifications || [];
-    const notifications = '' as any
     // console.log('notificationsData', notificationsData?.data)
     return (
         <div className='h-14 bg-white text-black px-4 md:px-8 flex items-center justify-between fixed top-0 left-0 md:left-60 right-0 z-20 shadow-sm'>

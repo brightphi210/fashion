@@ -28,11 +28,11 @@ type StoredUser = {
 };
 type DialCode = { name: string; dial_code: string; code: string; flag: string };
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
 
-const SHIPPING_OPTIONS = [
-  { id: "standard", label: "Standard Shipping", sub: "5–7 business days", price: 6.00, display: "$6.00" },
-];
+const SHIPPING_FEE = 6.00;
+const CURRENCY_SYMBOL = "€";
+const CURRENCY_CODE = "EUR";
 
 const DIAL_CODES: DialCode[] = [
   { name: "Nigeria", dial_code: "+234", code: "NG", flag: "🇳🇬" },
@@ -207,7 +207,6 @@ const Checkout = () => {
   const [loadingCountries, setLoadingCountries] = useState(true);
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
-  const [shippingMethod, setShippingMethod] = useState(SHIPPING_OPTIONS[0]);
   const [info, setInfo] = useState<ShippingInfo>({
     firstName: storedUser?.first_name ?? "", lastName: storedUser?.last_name ?? "",
     email: storedUser?.email ?? "", phoneCode: parsedPhone.code, phoneNumber: parsedPhone.local,
@@ -217,7 +216,7 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const totalUSD = parseFloat((cartTotal - discount + shippingMethod.price).toFixed(2));
+  const totalEUR = parseFloat((cartTotal - discount + SHIPPING_FEE).toFixed(2));
 
   useEffect(() => {
     setLoadingCountries(true);
@@ -284,7 +283,7 @@ const Checkout = () => {
           shipping_email: info.email, shipping_phone: fullPhone,
           shipping_street_address: info.address, shipping_city: info.city || info.state,
           shipping_state: info.state, shipping_postal_code: info.zip,
-          shipping_country: info.country, shipping_method: shippingMethod.id,
+          shipping_country: info.country, shipping_method: "standard",
           coupon_code: couponCode ?? null, discount_amount: discount,
           items: cart.map((item) => ({
             product_id: item.id, name: item.name, image: item.img,
@@ -334,7 +333,7 @@ const Checkout = () => {
           {/* ── LEFT ── */}
           <div className="flex-1 space-y-4">
 
-            {/* Step 1 — Shipping */}
+            {/* Step 1 — Shipping Details */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-5">
                 <StepBadge n={1} />
@@ -389,35 +388,32 @@ const Checkout = () => {
               </div>
             </div>
 
-            {/* Step 2 — Shipping Method */}
+            {/* Step 2 — Shipping (static display, no selection) */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <StepBadge n={2} />
-                <h2 className="font-black text-base text-black">Shipping Method</h2>
+                <h2 className="font-black text-base text-black">Shipping</h2>
               </div>
-              <div className="space-y-2">
-                {SHIPPING_OPTIONS.map((opt) => (
-                  <button key={opt.id} onClick={() => setShippingMethod(opt)}
-                    className={`w-full flex items-center gap-3 p-3.5 rounded-xl transition-all text-left border-2 ${shippingMethod.id === opt.id ? "border-black bg-black/[0.02]" : "border-gray-100 hover:border-gray-300"
-                      }`}
-                  >
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${shippingMethod.id === opt.id ? "border-black" : "border-gray-300"}`}>
-                      {shippingMethod.id === opt.id && <div className="w-2 h-2 rounded-full bg-black" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-900">{opt.label}</p>
-                      <p className="text-xs text-gray-400">{opt.sub}</p>
-                    </div>
-                    <span className="text-sm font-black shrink-0 text-gray-900">
-                      {opt.display}
-                    </span>
-                  </button>
-                ))}
+              <div className="flex items-center gap-3 p-3.5 rounded-xl border-2 border-black bg-black/[0.02]">
+                <div className="w-4 h-4 rounded-full border-2 border-black flex items-center justify-center shrink-0">
+                  <div className="w-2 h-2 rounded-full bg-black" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-gray-900">Standard Shipping</p>
+                  <p className="text-xs text-gray-400">5–7 business days</p>
+                </div>
+                <span className="text-sm font-black text-gray-900 shrink-0">
+                  {CURRENCY_SYMBOL}{SHIPPING_FEE.toFixed(2)}
+                </span>
               </div>
             </div>
 
             {/* Step 3 — Payment */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <StepBadge n={3} />
+                <h2 className="font-black text-base text-black">Payment</h2>
+              </div>
               {error && (
                 <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-medium">
                   {error}
@@ -430,7 +426,7 @@ const Checkout = () => {
               >
                 {loading
                   ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Redirecting…</>
-                  : <><FiLock size={14} /> Pay ${totalUSD.toFixed(2)} USD <FiExternalLink size={12} className="opacity-60" /></>
+                  : <><FiLock size={14} /> Pay {CURRENCY_SYMBOL}{totalEUR.toFixed(2)} {CURRENCY_CODE} <FiExternalLink size={12} className="opacity-60" /></>
                 }
               </button>
             </div>
@@ -457,7 +453,7 @@ const Checkout = () => {
                       )}
                     </div>
                     <span className="text-xs font-black text-gray-900 shrink-0">
-                      ${(Number(item.price) * item.quantity).toFixed(2)}
+                      {CURRENCY_SYMBOL}{(Number(item.price) * item.quantity).toFixed(2)}
                     </span>
                   </div>
                 ))}
@@ -466,23 +462,23 @@ const Checkout = () => {
               <div className="space-y-2 pt-3 border-t border-gray-100">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Subtotal</span>
-                  <span className="font-semibold text-gray-800">${cartTotal.toFixed(2)}</span>
+                  <span className="font-semibold text-gray-800">{CURRENCY_SYMBOL}{cartTotal.toFixed(2)}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-green-600 font-semibold">Coupon ({couponCode})</span>
-                    <span className="font-semibold text-green-600">-${discount.toFixed(2)}</span>
+                    <span className="font-semibold text-green-600">-{CURRENCY_SYMBOL}{discount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Shipping</span>
                   <span className="font-semibold text-gray-800">
-                    ${shippingMethod.price.toFixed(2)}
+                    {CURRENCY_SYMBOL}{SHIPPING_FEE.toFixed(2)}
                   </span>
                 </div>
                 <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
                   <span className="font-black text-black">Total</span>
-                  <span className="font-black text-lg text-black">${totalUSD.toFixed(2)} USD</span>
+                  <span className="font-black text-lg text-black">{CURRENCY_SYMBOL}{totalEUR.toFixed(2)} {CURRENCY_CODE}</span>
                 </div>
               </div>
 

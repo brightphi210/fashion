@@ -259,7 +259,7 @@ const Product = () => {
         />
       )}
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
           {["Lifestyle", catLabel, name].map((label, i, arr) => (
@@ -319,7 +319,7 @@ const Product = () => {
 
             {/* Info */}
             <div className="flex-1">
-              <h1 className="text-xl font-black text-black mb-1">{name}</h1>
+              <h1 className="text-xl font-black text-neutral-600 mb-1">{name}</h1>
 
               {/* Price */}
               <div className="flex items-center gap-2 mb-4">
@@ -333,7 +333,7 @@ const Product = () => {
                   </span>
                 )}
                 {tag && !discount && (
-                  <span className="bg-black text-white text-xs font-black px-2 py-0.5 rounded-full">
+                  <span className="bg-red-600 text-white text-xs font-black px-2 py-0.5 rounded-full">
                     {tag}
                   </span>
                 )}
@@ -350,8 +350,8 @@ const Product = () => {
                       <button
                         key={color}
                         onClick={() => setSelectedColor(color)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-colors ${(selectedColor || colors[0]) === color
-                          ? "border-black bg-black text-white"
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-colors ${(selectedColor || colors[0]) === color
+                          ? "bg-neutral-700 text-white"
                           : "border-gray-200 text-gray-700 hover:border-gray-400"
                           }`}
                       >
@@ -365,7 +365,7 @@ const Product = () => {
               {/* Size */}
               {sizes.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-sm font-bold text-gray-700 mb-2">
+                  <p className="text-xs font-medium text-gray-700 mb-2">
                     Size: <span className="font-normal text-gray-500">{selectedSize || sizes[0]}</span>
                   </p>
                   <div className="flex gap-2 flex-wrap">
@@ -373,8 +373,8 @@ const Product = () => {
                       <button
                         key={size}
                         onClick={() => setSelectedSize(size)}
-                        className={`w-10 h-10 rounded-lg text-xs font-bold border-2 transition-colors ${(selectedSize || sizes[0]) === size
-                          ? "border-black bg-black text-white"
+                        className={`w-10 h-8 rounded-md text-xs border transition-colors ${(selectedSize || sizes[0]) === size
+                          ? "bg-neutral-700 text-white"
                           : "border-gray-200 text-gray-700 hover:border-gray-400"
                           }`}
                       >
@@ -409,20 +409,20 @@ const Product = () => {
               <div className="flex gap-3 flex-wrap">
                 <button
                   onClick={handleAddToCart}
-                  className={`flex items-center gap-2 font-black px-5 py-2.5 rounded-xl text-sm transition-all duration-300 ${addedFeedback || inCart
-                    ? "bg-green-500 text-white"
+                  className={`flex items-center gap-2 font-black px-5 py-2 rounded-md text-xs transition-all duration-300 ${addedFeedback || inCart
+                    ? "bg-green-600 text-white"
                     : "bg-black hover:bg-red-600 text-white"
                     }`}
                 >
                   {addedFeedback || inCart ? (
-                    <><FiCheck size={16} /> {inCart ? "In Cart" : "Added!"}</>
+                    <><FiCheck size={14} /> {inCart ? "In Cart" : "Added!"}</>
                   ) : (
                     <><FiShoppingCart size={16} /> Add to Cart</>
                   )}
                 </button>
                 <button
                   onClick={() => toggleFavourite({ ...product, img: galleryImages[0] })}
-                  className={`flex items-center gap-2 border-2 font-black px-5 py-2.5 rounded-xl text-sm transition-colors ${liked
+                  className={`flex items-center gap-2 border-2 font-black px-5 py-2 rounded-md text-xs transition-colors ${liked
                     ? "border-red-500 text-red-600 bg-red-50"
                     : "border-gray-200 text-gray-700 hover:border-red-400 hover:text-red-600"
                     }`}

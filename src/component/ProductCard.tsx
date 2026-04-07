@@ -77,7 +77,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     };
 
     return (
-        <div className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300">
+        <div className="group bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300">
 
             {/* ── Image ── */}
             <Link
@@ -89,10 +89,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     src={imgSrc}
                     alt={name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                // loading="lazy"
                 />
 
-                {/* Badge */}
+                {/* Badge — tag or discount label */}
                 {badgeLabel && (
                     <span className="absolute top-2.5 left-2.5 bg-red-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md tracking-wide uppercase">
                         {badgeLabel}
@@ -108,20 +107,6 @@ const ProductCard = ({ product }: ProductCardProps) => {
                         size={14}
                         className={liked ? "fill-red-500 text-red-500" : "text-gray-400"}
                     />
-                </button>
-
-                {/* Add to cart — slides up on hover */}
-                <button
-                    onClick={handleAddToCart}
-                    className={`absolute bottom-0 left-0 right-0 py-2 text-xs font-black flex items-center justify-center gap-1.5 transition-all duration-300 ${isAdded
-                        ? "bg-green-500 text-white translate-y-0 opacity-100"
-                        : inCart
-                            ? "bg-green-500 text-white translate-y-0 opacity-100"
-                            : "bg-black text-white translate-y-full opacity-0 group-hover:translate-y-0 group-hover:opacity-100"
-                        }`}
-                >
-                    <FiShoppingCart size={12} />
-                    {isAdded ? "Added!" : inCart ? "In Cart" : "Add to Cart"}
                 </button>
             </Link>
 
@@ -148,6 +133,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
                     </p>
                 )}
 
+                {/* ── Price row + Cart button ── */}
                 <div className="flex items-center justify-between gap-2 mt-1">
                     <div className="flex items-baseline gap-1.5">
                         <span className="text-sm font-black text-black">€{price.toFixed(2)}</span>
@@ -155,11 +141,20 @@ const ProductCard = ({ product }: ProductCardProps) => {
                             <span className="text-[11px] text-gray-300 line-through">€{oldPrice.toFixed(2)}</span>
                         )}
                     </div>
-                    {discount && (
-                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-md">
-                            -{discount}%
-                        </span>
-                    )}
+
+                    {/* Cart icon button — replaces the discount badge here */}
+                    <button
+                        onClick={handleAddToCart}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 active:scale-95 ${isAdded
+                            ? "bg-green-500 text-white"
+                            : inCart
+                                ? "bg-green-600 text-white"
+                                : "bg-black text-white hover:bg-gray-800"
+                            }`}
+                        title={isAdded ? "Added!" : inCart ? "In Cart" : "Add to Cart"}
+                    >
+                        <FiShoppingCart size={13} />
+                    </button>
                 </div>
             </div>
         </div>

@@ -158,7 +158,7 @@ const Home = () => {
 
           {/* Quick Filter Pills */}
           <div className="flex gap-2 flex-wrap mt-4">
-            {["All", "New In", "Sale", "Trending", "Under €50"].map((filter) => (
+            {["All", "New", "Sale", "Hot"].map((filter) => (
               <button
                 key={filter}
                 onClick={() => handleFilterClick(filter === "All" ? "" : filter)}

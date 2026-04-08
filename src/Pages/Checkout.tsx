@@ -26,16 +26,18 @@ type StoredUser = {
   id: number; first_name: string; last_name: string; full_name: string;
   email: string; phone_number: string; is_email_verified: boolean; date_joined: string;
 };
+
+// DialCode is now built dynamically from the REST Countries API
 type DialCode = { name: string; dial_code: string; code: string; flag: string };
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
-// const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 const SHIPPING_FEE = 1.00;
 const CURRENCY_SYMBOL = "€";
 const CURRENCY_CODE = "EUR";
 
-const DIAL_CODES: DialCode[] = [
+// Fallback list used if the REST Countries API is unavailable
+const FALLBACK_DIAL_CODES: DialCode[] = [
   { name: "Nigeria", dial_code: "+234", code: "NG", flag: "🇳🇬" },
   { name: "United States", dial_code: "+1", code: "US", flag: "🇺🇸" },
   { name: "United Kingdom", dial_code: "+44", code: "GB", flag: "🇬🇧" },
@@ -56,13 +58,73 @@ const DIAL_CODES: DialCode[] = [
   { name: "Egypt", dial_code: "+20", code: "EG", flag: "🇪🇬" },
 ];
 
+/**
+ * Converts an ISO 3166-1 alpha-2 country code into a flag emoji.
+ * Works by converting each letter to the Regional Indicator Symbol Letters (U+1F1E6–U+1F1FF).
+ */
+const codeToFlag = (iso2: string): string => {
+  if (!iso2 || iso2.length !== 2) return "🏳";
+  return [...iso2.toUpperCase()]
+    .map((c) => String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65))
+    .join("");
+};
+
+/**
+ * Fetches all countries with their calling codes from the REST Countries v3.1 API.
+ * Endpoint: https://restcountries.com/v3.1/all?fields=name,idd,cca2
+ *
+ * Each country record contains:
+ *   idd.root  – e.g. "+1", "+4"
+ *   idd.suffixes – e.g. [""]  (US) or ["4"] (UK → +44)
+ *
+ * For countries with multiple suffixes (e.g. US territories all share +1),
+ * we only expose the first suffix so each entry stays unambiguous.
+ */
+const fetchDialCodes = async (): Promise<DialCode[]> => {
+  const res = await fetch(
+    "https://restcountries.com/v3.1/all?fields=name,idd,cca2",
+    { headers: { Accept: "application/json" } }
+  );
+  if (!res.ok) throw new Error("REST Countries fetch failed");
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any[] = await res.json();
+
+  const codes: DialCode[] = [];
+  for (const country of data) {
+    const root: string = country.idd?.root ?? "";
+    const suffixes: string[] = country.idd?.suffixes ?? [];
+    if (!root) continue; // some territories have no IDD info
+
+    const commonName: string =
+      country.name?.common ?? country.name?.official ?? "Unknown";
+    const iso2: string = country.cca2 ?? "";
+
+    // Produce one entry per unique dial_code (root+suffix).
+    // Most countries have a single suffix; we include all so users can pick
+    // their exact code (e.g. Canada "+1" vs US "+1" are separate rows).
+    const seen = new Set<string>();
+    for (const suffix of suffixes.length ? suffixes : [""]) {
+      const dial_code = `${root}${suffix}`;
+      if (seen.has(dial_code)) continue;
+      seen.add(dial_code);
+      codes.push({ name: commonName, dial_code, code: iso2, flag: codeToFlag(iso2) });
+    }
+  }
+
+  // Sort alphabetically by country name
+  return codes.sort((a, b) => a.name.localeCompare(b.name));
+};
+
 const getStoredUser = (): StoredUser | null => {
   try { return JSON.parse(localStorage.getItem("user") ?? "null"); } catch { return null; }
 };
 const isValidPhone = (n: string) => /^\d{6,15}$/.test(n.replace(/[\s\-()]/g, ""));
-const parseStoredPhone = (raw: string): { code: string; local: string } => {
+
+const parseStoredPhone = (raw: string, dialCodes: DialCode[]): { code: string; local: string } => {
   if (!raw) return { code: "+234", local: "" };
-  const sorted = [...DIAL_CODES].sort((a, b) => b.dial_code.length - a.dial_code.length);
+  // Try longest-match first to avoid "+1" matching "+123"
+  const sorted = [...dialCodes].sort((a, b) => b.dial_code.length - a.dial_code.length);
   for (const dc of sorted) {
     if (raw.startsWith(dc.dial_code)) return { code: dc.dial_code, local: raw.slice(dc.dial_code.length) };
   }
@@ -70,17 +132,33 @@ const parseStoredPhone = (raw: string): { code: string; local: string } => {
 };
 
 // ─── Phone Code Dropdown ──────────────────────────────────────────────────────
-const PhoneCodeDropdown = ({ value, onChange }: { value: string; onChange: (c: string) => void }) => {
+const PhoneCodeDropdown = ({
+  value,
+  onChange,
+  dialCodes,
+  loading,
+}: {
+  value: string;
+  onChange: (c: string) => void;
+  dialCodes: DialCode[];
+  loading: boolean;
+}) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  const selected = DIAL_CODES.find((d) => d.dial_code === value) ?? DIAL_CODES[0];
-  const filtered = DIAL_CODES.filter((d) =>
-    d.name.toLowerCase().includes(search.toLowerCase()) || d.dial_code.includes(search)
+
+  const selected = dialCodes.find((d) => d.dial_code === value) ?? dialCodes[0];
+
+  const filtered = dialCodes.filter(
+    (d) =>
+      d.name.toLowerCase().includes(search.toLowerCase()) ||
+      d.dial_code.includes(search)
   );
 
   useEffect(() => {
-    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
@@ -90,34 +168,53 @@ const PhoneCodeDropdown = ({ value, onChange }: { value: string; onChange: (c: s
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="h-full flex items-center gap-1.5 px-3 text-sm font-medium min-w-[90px] bg-gray-50 border-r border-gray-200 rounded-l-xl text-gray-700"
+        disabled={loading}
+        className="h-full flex items-center gap-1.5 px-3 text-sm font-medium min-w-[90px] bg-gray-50 border-r border-gray-200 rounded-l-xl text-gray-700 disabled:opacity-50"
       >
-        <span className="text-base">{selected.flag}</span>
-        <span className="tabular-nums text-xs">{selected.dial_code}</span>
+        {loading ? (
+          <span className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <span className="text-base">{selected?.flag}</span>
+        )}
+        <span className="tabular-nums text-xs">{selected?.dial_code ?? "…"}</span>
         <FiChevronDown size={11} className={`text-gray-400 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
+
       {open && (
-        <div className="absolute left-0 top-full mt-1 w-60 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+        <div className="absolute left-0 top-full mt-1 w-64 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden">
           <div className="p-2 border-b border-gray-100">
             <div className="relative">
               <FiSearch size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input autoFocus type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search…"
+              <input
+                autoFocus
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search country or code…"
                 className="w-full pl-7 pr-3 py-1.5 text-xs rounded-lg outline-none border border-gray-200 bg-gray-50"
               />
             </div>
           </div>
-          <div className="max-h-48 overflow-y-auto">
-            {filtered.map((d) => (
-              <button key={`${d.code}-${d.dial_code}`} type="button"
-                onClick={() => { onChange(d.dial_code); setOpen(false); setSearch(""); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${d.dial_code === value ? "font-black bg-gray-50" : "font-normal"}`}
-              >
-                <span className="text-base w-5 shrink-0">{d.flag}</span>
-                <span className="flex-1 truncate text-gray-700">{d.name}</span>
-                <span className="text-xs text-gray-400 tabular-nums shrink-0">{d.dial_code}</span>
-              </button>
-            ))}
+          <div className="max-h-52 overflow-y-auto">
+            {filtered.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-4">No results</p>
+            ) : (
+              filtered.map((d) => (
+                <button
+                  key={`${d.code}-${d.dial_code}`}
+                  type="button"
+                  onClick={() => { onChange(d.dial_code); setOpen(false); setSearch(""); }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${d.dial_code === value && d.code === selected?.code
+                    ? "font-black bg-gray-50"
+                    : "font-normal"
+                    }`}
+                >
+                  <span className="text-base w-5 shrink-0">{d.flag}</span>
+                  <span className="flex-1 truncate text-gray-700">{d.name}</span>
+                  <span className="text-xs text-gray-400 tabular-nums shrink-0">{d.dial_code}</span>
+                </button>
+              ))
+            )}
           </div>
         </div>
       )}
@@ -126,7 +223,10 @@ const PhoneCodeDropdown = ({ value, onChange }: { value: string; onChange: (c: s
 };
 
 // ─── Field ────────────────────────────────────────────────────────────────────
-const Field = ({ label, value, onChange, placeholder, type = "text", icon, required = true, colSpan = false, error }: {
+const Field = ({
+  label, value, onChange, placeholder, type = "text", icon,
+  required = true, colSpan = false, error,
+}: {
   label: string; value: string; onChange?: (v: string) => void;
   placeholder: string; type?: string; icon?: React.ReactNode;
   required?: boolean; colSpan?: boolean; error?: string;
@@ -136,7 +236,9 @@ const Field = ({ label, value, onChange, placeholder, type = "text", icon, requi
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     <div className="relative">
-      {icon && <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">{icon}</div>}
+      {icon && (
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">{icon}</div>
+      )}
       <input
         type={type} value={value}
         onChange={(e) => onChange?.(e.target.value)}
@@ -156,7 +258,10 @@ const Field = ({ label, value, onChange, placeholder, type = "text", icon, requi
 );
 
 // ─── Location Select ──────────────────────────────────────────────────────────
-const LocationSelect = ({ label, value, onChange, options, placeholder, required = true, loading = false, disabled = false }: {
+const LocationSelect = ({
+  label, value, onChange, options, placeholder,
+  required = true, loading = false, disabled = false,
+}: {
   label: string; value: string; onChange: (v: string) => void;
   options: string[]; placeholder: string; required?: boolean; loading?: boolean; disabled?: boolean;
 }) => (
@@ -193,7 +298,25 @@ const Checkout = () => {
     (location.state as { discount?: number; couponCode?: string | null }) ?? {};
 
   const storedUser = getStoredUser();
-  const parsedPhone = parseStoredPhone(storedUser?.phone_number ?? "");
+
+  // ── Dial codes — loaded from REST Countries API ───────────────────────────
+  const [dialCodes, setDialCodes] = useState<DialCode[]>(FALLBACK_DIAL_CODES);
+  const [dialCodesLoading, setDialCodesLoading] = useState(true);
+
+  useEffect(() => {
+    setDialCodesLoading(true);
+    fetchDialCodes()
+      .then((codes) => {
+        if (codes.length > 0) setDialCodes(codes);
+      })
+      .catch(() => {
+        // silently fall back to the hardcoded list — already the default state
+      })
+      .finally(() => setDialCodesLoading(false));
+  }, []);
+
+  // Resolve stored phone only after dial codes are ready
+  const parsedPhone = parseStoredPhone(storedUser?.phone_number ?? "", dialCodes);
 
   useEffect(() => {
     if (!localStorage.getItem("sxiAccessToken"))
@@ -208,11 +331,25 @@ const Checkout = () => {
   const [loadingCountries, setLoadingCountries] = useState(true);
   const [loadingStates, setLoadingStates] = useState(false);
   const [loadingCities, setLoadingCities] = useState(false);
+
   const [info, setInfo] = useState<ShippingInfo>({
-    firstName: storedUser?.first_name ?? "", lastName: storedUser?.last_name ?? "",
-    email: storedUser?.email ?? "", phoneCode: parsedPhone.code, phoneNumber: parsedPhone.local,
+    firstName: storedUser?.first_name ?? "",
+    lastName: storedUser?.last_name ?? "",
+    email: storedUser?.email ?? "",
+    phoneCode: parsedPhone.code,
+    phoneNumber: parsedPhone.local,
     address: "", city: "", state: "", zip: "", country: "",
   });
+
+  // Update phone code when dial codes finish loading (so pre-fill is correct)
+  useEffect(() => {
+    if (!dialCodesLoading && storedUser?.phone_number) {
+      const parsed = parseStoredPhone(storedUser.phone_number, dialCodes);
+      setInfo((p) => ({ ...p, phoneCode: parsed.code, phoneNumber: parsed.local }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialCodesLoading]);
+
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -223,8 +360,13 @@ const Checkout = () => {
     setLoadingCountries(true);
     fetch("https://countriesnow.space/api/v0.1/countries/positions")
       .then((r) => r.json())
-      .then((d) => { if (!d.error && Array.isArray(d.data)) setCountries(d.data.map((c: { name: string }) => c.name).sort()); })
-      .catch(() => setCountries(["Nigeria", "United States", "United Kingdom", "Ghana", "Kenya", "South Africa", "Canada", "Australia"]))
+      .then((d) => {
+        if (!d.error && Array.isArray(d.data))
+          setCountries(d.data.map((c: { name: string }) => c.name).sort());
+      })
+      .catch(() =>
+        setCountries(["Nigeria", "United States", "United Kingdom", "Ghana", "Kenya", "South Africa", "Canada", "Australia"])
+      )
       .finally(() => setLoadingCountries(false));
   }, []);
 
@@ -238,7 +380,10 @@ const Checkout = () => {
       body: JSON.stringify({ country: info.country }),
     })
       .then((r) => r.json())
-      .then((d) => { if (!d.error && d.data?.states) setStates(d.data.states.map((s: { name: string }) => s.name).sort()); })
+      .then((d) => {
+        if (!d.error && d.data?.states)
+          setStates(d.data.states.map((s: { name: string }) => s.name).sort());
+      })
       .catch(() => setStates([]))
       .finally(() => setLoadingStates(false));
   }, [info.country]);
@@ -299,7 +444,10 @@ const Checkout = () => {
         throw new Error(`Unexpected server response (HTTP ${res.status}).`);
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        if (res.status === 401) { localStorage.removeItem("sxiAccessToken"); localStorage.removeItem("user"); navigate("/login"); return; }
+        if (res.status === 401) {
+          localStorage.removeItem("sxiAccessToken"); localStorage.removeItem("user");
+          navigate("/login"); return;
+        }
         throw new Error(errData?.detail ?? `Server error (${res.status}).`);
       }
       const data = await res.json();
@@ -355,17 +503,31 @@ const Checkout = () => {
                   <label className="text-xs font-black text-gray-700 mb-1.5 block">
                     Phone Number <span className="text-red-500">*</span>
                   </label>
-                  <div className={`flex rounded-xl overflow-visible border ${phoneError ? "border-red-400" : "border-gray-200"} focus-within:border-black transition-colors`}>
-                    <PhoneCodeDropdown value={info.phoneCode} onChange={(c) => setInfo((p) => ({ ...p, phoneCode: c }))} />
+                  <div
+                    className={`flex rounded-xl overflow-visible border ${phoneError ? "border-red-400" : "border-gray-200"
+                      } focus-within:border-black transition-colors`}
+                  >
+                    <PhoneCodeDropdown
+                      value={info.phoneCode}
+                      onChange={(c) => setInfo((p) => ({ ...p, phoneCode: c }))}
+                      dialCodes={dialCodes}
+                      loading={dialCodesLoading}
+                    />
                     <input
-                      type="tel" value={info.phoneNumber}
-                      onChange={(e) => { setInfo((p) => ({ ...p, phoneNumber: e.target.value })); if (phoneError) setPhoneError(null); }}
+                      type="tel"
+                      value={info.phoneNumber}
+                      onChange={(e) => {
+                        setInfo((p) => ({ ...p, phoneNumber: e.target.value }));
+                        if (phoneError) setPhoneError(null);
+                      }}
                       onBlur={validatePhone}
                       placeholder="8012345678"
                       className="flex-1 px-3 py-2.5 text-sm outline-none rounded-r-xl bg-gray-50 text-gray-800 border-l border-gray-200 min-w-0"
                     />
                   </div>
-                  {phoneError && <p className="text-[11px] text-red-500 mt-1 font-medium">{phoneError}</p>}
+                  {phoneError && (
+                    <p className="text-[11px] text-red-500 mt-1 font-medium">{phoneError}</p>
+                  )}
                   {!phoneError && info.phoneNumber && isValidPhone(info.phoneNumber) && (
                     <p className="text-[11px] text-green-600 mt-1 font-medium flex items-center gap-1">
                       <FiCheck size={10} /> {info.phoneCode} {info.phoneNumber.replace(/^0+/, "")}
@@ -389,7 +551,7 @@ const Checkout = () => {
               </div>
             </div>
 
-            {/* Step 2 — Shipping (static display, no selection) */}
+            {/* Step 2 — Shipping */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center gap-2 mb-4">
                 <StepBadge n={2} />
@@ -450,7 +612,9 @@ const Checkout = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-bold text-gray-900 truncate">{item.name}</p>
                       {item.selectedColor && (
-                        <p className="text-[10px] text-gray-400">{item.selectedColor}{item.selectedSize ? ` · ${item.selectedSize}` : ""}</p>
+                        <p className="text-[10px] text-gray-400">
+                          {item.selectedColor}{item.selectedSize ? ` · ${item.selectedSize}` : ""}
+                        </p>
                       )}
                     </div>
                     <span className="text-xs font-black text-gray-900 shrink-0">
@@ -473,9 +637,7 @@ const Checkout = () => {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Shipping</span>
-                  <span className="font-semibold text-gray-800">
-                    {CURRENCY_SYMBOL}{SHIPPING_FEE.toFixed(2)}
-                  </span>
+                  <span className="font-semibold text-gray-800">{CURRENCY_SYMBOL}{SHIPPING_FEE.toFixed(2)}</span>
                 </div>
                 <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
                   <span className="font-black text-black">Total</span>

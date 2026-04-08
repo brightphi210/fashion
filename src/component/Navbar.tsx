@@ -328,7 +328,7 @@ const Navbar = () => {
                       <p className="text-[10px] text-gray-400">{item.selectedColor}{item.selectedSize ? ` · ${item.selectedSize}` : ""}</p>
                     )}
                     <p className="text-sm font-black text-black mt-1">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      €{(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-2.5 shrink-0">
@@ -357,11 +357,11 @@ const Navbar = () => {
             <div className="px-5 py-4 bg-gray-50 shrink-0">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-gray-500">Subtotal ({cartCount} item{cartCount !== 1 ? "s" : ""})</span>
-                <span className="text-xs font-semibold text-gray-700">${cartTotal.toFixed(2)}</span>
+                <span className="text-xs font-semibold text-gray-700">€{cartTotal.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-black text-black">Total</span>
-                <span className="text-xl font-black text-black">${cartTotal.toFixed(2)}</span>
+                <span className="text-xl font-black text-black">€{cartTotal.toFixed(2)}</span>
               </div>
               <Link
                 to="/cart"

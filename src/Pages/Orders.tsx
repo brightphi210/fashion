@@ -184,7 +184,7 @@ const OrderCard = ({ order, expanded, onToggle, onRefetch }: {
 
                 {/* Total + chevron */}
                 <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-sm font-black text-black">${parseFloat(order.total_amount).toFixed(2)}</span>
+                    <span className="text-sm font-black text-black">€{parseFloat(order.total_amount).toFixed(2)}</span>
                     <FiChevronRight
                         size={14}
                         className={`text-gray-400 transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}
@@ -211,7 +211,7 @@ const OrderCard = ({ order, expanded, onToggle, onRefetch }: {
                                     </p>
                                 </div>
                                 <div className="text-right shrink-0">
-                                    <p className="text-xs font-black text-black">${parseFloat(item.subtotal).toFixed(2)}</p>
+                                    <p className="text-xs font-black text-black">€{parseFloat(item.subtotal).toFixed(2)}</p>
                                     <p className="text-[10px] text-gray-400">×{item.quantity}</p>
                                 </div>
                             </div>
@@ -222,17 +222,17 @@ const OrderCard = ({ order, expanded, onToggle, onRefetch }: {
                     <div className="bg-gray-50 rounded-xl p-3.5 space-y-1.5 text-xs mb-4">
                         <div className="flex justify-between text-gray-500">
                             <span>Subtotal</span>
-                            <span className="font-semibold text-gray-800">${parseFloat(order.subtotal).toFixed(2)}</span>
+                            <span className="font-semibold text-gray-800">€{parseFloat(order.subtotal).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-gray-500">
                             <span>Shipping ({order.shipping_method})</span>
                             <span className={`font-semibold ${parseFloat(order.shipping_fee) === 0 ? "text-green-600" : "text-gray-800"}`}>
-                                {parseFloat(order.shipping_fee) === 0 ? "Free" : `$${parseFloat(order.shipping_fee).toFixed(2)}`}
+                                {parseFloat(order.shipping_fee) === 0 ? "Free" : `${parseFloat(order.shipping_fee).toFixed(2)}`}
                             </span>
                         </div>
                         <div className="flex justify-between border-t border-gray-200 pt-1.5">
                             <span className="font-black text-black">Total</span>
-                            <span className="font-black text-black">${parseFloat(order.total_amount).toFixed(2)}</span>
+                            <span className="font-black text-black">€{parseFloat(order.total_amount).toFixed(2)}</span>
                         </div>
                     </div>
 

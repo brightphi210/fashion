@@ -51,7 +51,7 @@ const OrderSuccess = () => {
         const verify = async (): Promise<boolean> => {
             try {
                 const res = await fetch(
-                    `https://6ixunit.store/api/payments/verify-session/?session_id=${sessionId}`,
+                    `https://api.6ixunit.store/api/payments/verify-session/?session_id=${sessionId}`,
                     { headers: { Authorization: `Bearer ${accessToken}` } }
                 );
                 if (res.status === 401) { localStorage.removeItem("sxiAccessToken"); localStorage.removeItem("user"); navigate("/login"); return true; }
@@ -216,7 +216,7 @@ const OrderSuccess = () => {
                         <div className="rounded-2xl border p-4 mb-4 flex justify-between items-center" style={{ backgroundColor: card, borderColor: border }}>
                             <span className="text-sm font-black" style={{ color: textPrimary }}>Total Paid</span>
                             <span className="text-lg font-black" style={{ color: textPrimary }}>
-                                ${parseFloat(order.total_amount).toFixed(2)} USD
+                                €{parseFloat(order.total_amount).toFixed(2)} EUR
                             </span>
                         </div>
                     )}

@@ -1,4 +1,4 @@
-import { FiInstagram, FiPhone } from "react-icons/fi";
+import { FiInstagram, FiMail } from "react-icons/fi";
 
 const Footer = () => (
   <footer className="bg-white border-t border-gray-100 mt-auto">
@@ -20,13 +20,13 @@ const Footer = () => (
         </a>
 
         <a
-          href="https://wa.me/2341234567"
+          href="mailto:6ixunit@gmail.com"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-black transition-colors font-medium"
         >
-          <FiPhone size={14} />
-          +234 123 4567
+          <FiMail size={15} />
+          6ixunit@gmail.com
         </a>
       </div>
 

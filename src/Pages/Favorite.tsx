@@ -193,12 +193,6 @@ const Favourite = () => {
         {/* Hero Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-8">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <HiHeart className="text-red-500" size={18} />
-              <span className="text-xs font-semibold tracking-widest text-red-500 uppercase" style={{ fontFamily: "'Epilogue', sans-serif", letterSpacing: "0.14em" }}>
-                Saved Items
-              </span>
-            </div>
             <h1 className="text-3xl font-extrabold text-black tracking-tight leading-none" style={{ letterSpacing: "-0.04em" }}>
               My Favourites
             </h1>
@@ -207,7 +201,6 @@ const Favourite = () => {
           {favourites.length > 0 && (
             <div className="flex items-center gap-2.5 flex-wrap">
               <div className="stat-card bg-white border border-gray-100 rounded-xl px-3.5 py-2 flex items-center gap-2 shadow-sm">
-                <HiHeart className="text-red-400" size={14} />
                 <span className="text-xs font-semibold text-gray-700" style={{ fontFamily: "'Epilogue', sans-serif" }}>
                   <strong className="text-black" style={{ fontFamily: "'Syne', sans-serif" }}>{favourites.length}</strong> saved
                 </span>

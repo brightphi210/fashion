@@ -1,37 +1,34 @@
-import { useRef } from "react";
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { HiOutlineFire } from "react-icons/hi";
-import { useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import EmailCaptureModal from "../component/EmailCaptureModal";
 import Footer from "../component/Footer";
 import Navbar from "../component/Navbar";
 import ProductCard, { ProductCardSkeleton } from "../component/ProductCard";
-import { useGetCategories, useGetProducts } from "../hooks/mutations/allMutation";
+import { useGetProducts } from "../hooks/mutations/allMutation";
 
 const Home = () => {
-  const categoryScrollRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+  // const categoryScrollRef = useRef<HTMLDivElement>(null);
+  // const navigate = useNavigate();
 
-  const { categories, isLoading: isCategoriesLoading } = useGetCategories();
-  const rawCategories = categories?.data ?? [];
-  const allCategories: any[] = Array.isArray(rawCategories) ? rawCategories : [];
+  // const { categories, isLoading: isCategoriesLoading } = useGetCategories();
+  // const rawCategories = categories?.data ?? [];
+  // const allCategories: any[] = Array.isArray(rawCategories) ? rawCategories : [];
 
   const { products, isLoading: isProductsLoading } = useGetProducts();
   const rawProducts = products?.data ?? [];
   const allProducts: any[] = Array.isArray(rawProducts) ? rawProducts : [];
 
-  const scrollCategories = (dir: "left" | "right") => {
-    categoryScrollRef.current?.scrollBy({
-      left: dir === "left" ? -180 : 180,
-      behavior: "smooth",
-    });
-  };
+  // const scrollCategories = (dir: "left" | "right") => {
+  //   categoryScrollRef.current?.scrollBy({
+  //     left: dir === "left" ? -180 : 180,
+  //     behavior: "smooth",
+  //   });
+  // };
 
-  const handleFilterClick = (filter: string) => {
-    navigate(`/search?q=${encodeURIComponent(filter.toLowerCase())}`);
-  };
+  // const handleFilterClick = (filter: string) => {
+  //   navigate(`/search?q=${encodeURIComponent(filter.toLowerCase())}`);
+  // };
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -51,7 +48,7 @@ const Home = () => {
       <div className="max-w-5xl mx-auto px-4 pb-0">
 
         {/* ── Browse By Category ── */}
-        <section className="mb-10 pt-10">
+        {/* <section className="mb-10 pt-10">
           <div className="flex items-end justify-between mb-5">
             <div>
               <h2
@@ -156,7 +153,6 @@ const Home = () => {
             />
           </div>
 
-          {/* Quick Filter Pills */}
           <div className="flex gap-2 flex-wrap mt-4">
             {["All", "New", "Sale", "Hot"].map((filter) => (
               <button
@@ -168,10 +164,10 @@ const Home = () => {
               </button>
             ))}
           </div>
-        </section>
+        </section> */}
 
         {/* ── New Arrivals ── */}
-        <section className="pb-16">
+        <section className="pb-16 pt-14">
           <div className="flex items-center gap-2 mb-4">
             <HiOutlineFire className="text-red-500" size={22} />
             <h2 className="text-lg font-black text-black">New Arrival</h2>

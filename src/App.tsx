@@ -4,6 +4,7 @@ import DashboardNavbar from './component/DashboardNavbar'
 import SideBar from './component/SideBar'
 import Content from './content/Content'
 import './index.css'
+import AdminLogin from './Pages/AdminLogin'
 import Cart from './Pages/Cart'
 import Categories from './Pages/Categories'
 import Checkout from './Pages/Checkout'
@@ -124,6 +125,7 @@ const App = () => {
             <Routes>
               <Route path='/' element={<Home />} />
               <Route path='/login' element={<Login />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
               <Route path='/verify-otp' element={<OTPVerify />} />
               <Route path='/favourites' element={<Favourite />} />
               <Route path='/cart' element={<Cart />} />

@@ -261,7 +261,7 @@ const Product = () => {
 
       <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
+        <nav className="flex items-center gap-1.5 text-xs text-gray-500 mb-6">
           {["Lifestyle", catLabel, name].map((label, i, arr) => (
             <span key={i} className="flex items-center gap-1.5">
               {i > 0 && <FiChevronRight size={13} className="text-gray-400" />}
@@ -280,14 +280,14 @@ const Product = () => {
         </nav>
 
         {/* ── Top Section ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6">
-          <div className="flex flex-col md:flex-row gap-6">
+        <div className="bg-white rounded-xl border border-gray-100 lg:p-5 p-3 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
 
             {/* Images */}
             <div className="md:w-64 shrink-0">
               {/* Main image — click to preview */}
               <div
-                className="rounded-xl overflow-hidden bg-gray-50 mb-3 cursor-zoom-in"
+                className="rounded-md overflow-hidden bg-gray-50 mb-3 cursor-zoom-in"
                 style={{ aspectRatio: "1/1" }}
                 onClick={() => setPreviewIndex(activeImg)}
               >
@@ -319,21 +319,21 @@ const Product = () => {
 
             {/* Info */}
             <div className="flex-1">
-              <h1 className="text-xl font-black text-neutral-600 mb-1">{name}</h1>
+              <h1 className="text-sm font-black text-neutral-600 mb-1">{name}</h1>
 
               {/* Price */}
               <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl font-black text-black">€{price.toFixed(2)}</span>
+                <span className="text-sm font-black text-black">€{price.toFixed(2)}</span>
                 {oldPrice && (
-                  <span className="text-base text-gray-400 line-through">€{oldPrice.toFixed(2)}</span>
+                  <span className="text-sm text-gray-400 line-through">€{oldPrice.toFixed(2)}</span>
                 )}
                 {discount && (
-                  <span className="bg-red-100 text-red-600 text-xs font-black px-2 py-0.5 rounded-full">
+                  <span className="bg-red-100 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full">
                     -{discount}%
                   </span>
                 )}
                 {tag && !discount && (
-                  <span className="bg-red-600 text-white text-xs font-black px-2 py-0.5 rounded-full">
+                  <span className="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
                     {tag}
                   </span>
                 )}
@@ -342,8 +342,8 @@ const Product = () => {
               {/* Color */}
               {colors.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-sm font-bold text-gray-700 mb-2">
-                    Color: <span className="font-normal text-gray-500">{selectedColor || colors[0]}</span>
+                  <p className="text-xs text-gray-400 mb-2">
+                    Color: <span className="font-normal text-gray-600">{selectedColor || colors[0]}</span>
                   </p>
                   <div className="flex gap-2 flex-wrap">
                     {colors.map((color) => (
@@ -387,7 +387,7 @@ const Product = () => {
 
               {/* Quantity */}
               <div className="mb-5">
-                <p className="text-sm font-bold text-gray-700 mb-2">Quantity:</p>
+                <p className="text-xs font-medium text-gray-700 mb-2">Quantity:</p>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setQty((v) => Math.max(1, v - 1))}
@@ -442,7 +442,7 @@ const Product = () => {
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-4 py-2 rounded-full text-sm font-black capitalize transition-colors ${tab === t ? "bg-black text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                className={`px-4 py-2 rounded-sm text-xs font-black capitalize transition-colors ${tab === t ? "bg-black text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
               >
                 {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -452,8 +452,8 @@ const Product = () => {
 
           {tab === "details" && (
             <div>
-              <h3 className="font-black text-base text-black mb-2">Product Details</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">{description}</p>
+              <h3 className="font-black text-sm text-black mb-2">Product Details</h3>
+              <p className="text-xs text-gray-600 leading-relaxed">{description}</p>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 {[
                   ["Category", catLabel],
@@ -461,8 +461,8 @@ const Product = () => {
                   ["Available Colors", colors.join(", ") || "—"],
                 ].map(([label, val]) => (
                   <div key={label} className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-400 font-semibold mb-0.5">{label}</p>
-                    <p className="text-sm font-bold text-gray-800">{val}</p>
+                    <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                    <p className="text-xs font-semibold text-gray-800">{val}</p>
                   </div>
                 ))}
               </div>

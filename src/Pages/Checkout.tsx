@@ -28,9 +28,10 @@ type StoredUser = {
 };
 type DialCode = { name: string; dial_code: string; code: string; flag: string };
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
+// const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
-const SHIPPING_FEE = 6.00;
+const SHIPPING_FEE = 1.00;
 const CURRENCY_SYMBOL = "€";
 const CURRENCY_CODE = "EUR";
 

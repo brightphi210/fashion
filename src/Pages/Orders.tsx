@@ -262,14 +262,14 @@ const Orders = () => {
 
             <div className="max-w-5xl mx-auto px-4 py-8">
                 {/* Breadcrumb */}
-                <nav className="flex items-center gap-1.5 text-sm text-gray-400 mb-6">
+                <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-6">
                     <Link to="/" className="hover:text-black transition-colors font-medium">Home</Link>
                     <FiChevronRight size={13} />
                     <span className="font-bold text-gray-800">Order History</span>
                 </nav>
 
                 <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-xl font-black text-black">Your Orders</h1>
+                    <h1 className="text-base font-black text-black">Your Orders</h1>
                     {!isLoading && allOrders.length > 0 && (
                         <span className="text-xs text-gray-400 font-semibold bg-white border border-gray-100 px-3 py-1.5 rounded-full">
                             {allOrders.length} order{allOrders.length !== 1 ? "s" : ""}
@@ -283,7 +283,7 @@ const Orders = () => {
                         <button
                             key={tab}
                             onClick={() => { setActiveFilter(tab); setExpandedId(null); }}
-                            className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all duration-150 ${activeFilter === tab
+                            className={`shrink-0 px-3.5 py-1.5 rounded-full text-[10px] font-bold border transition-all duration-150 ${activeFilter === tab
                                 ? "bg-black border-black text-white"
                                 : "bg-white border-gray-200 text-gray-500 hover:border-gray-400"
                                 }`}

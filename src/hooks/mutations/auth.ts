@@ -16,6 +16,15 @@ export const useLogin = () => {
   });
 };
 
+
+export const useAdminLogin = () => {
+  return useMutation({
+    mutationFn: (data: any) => post_requests("auth/admin/login/", data),
+    // onSuccess shape: response.data = { user, access, refresh }
+    // onError shape (unverified): error.response.data = { email_verified: false, email }
+  });
+};
+
 export const useVerifyOTP = () => {
   return useMutation({
     mutationFn: (data: any) => post_requests("auth/verify-otp/", data),

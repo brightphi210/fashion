@@ -113,7 +113,7 @@ const Navbar = () => {
 
           {/* LEFT */}
           <div className="flex items-center gap-4 flex-1">
-            <Link to="/" className="flex items-center shrink-0 w-10 h-10 rounded overflow-hidden">
+            <Link to="/" className="flex items-center shrink-0 w-8 h-8 rounded overflow-hidden">
               <img src={logo} alt="Logo" className="w-full h-full object-cover" />
             </Link>
 
@@ -121,7 +121,7 @@ const Navbar = () => {
             <div ref={dropdownRef} className="hidden md:block relative shrink-0">
               <button
                 onClick={() => setDropdown((v) => !v)}
-                className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-red-600 transition-colors px-3 py-2 rounded-lg hover:bg-black/5"
+                className="flex items-center gap-1 text-xs font-semibold text-gray-700 hover:text-red-600 transition-colors px-3 py-2 rounded-lg hover:bg-black/5"
               >
                 Category
                 <FiChevronDown
@@ -182,7 +182,7 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-1 shrink-0">
             <Link
               to="/orders"
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-gray-600 hover:text-red-600 transition-colors rounded-lg hover:bg-black/5 whitespace-nowrap"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-red-600 transition-colors rounded-lg hover:bg-black/5 whitespace-nowrap"
             >
               <FiPackage size={16} />
               Orders

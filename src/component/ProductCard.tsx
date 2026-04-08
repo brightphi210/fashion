@@ -111,7 +111,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
             </Link>
 
             {/* ── Card Body ── */}
-            <div className="p-3.5">
+            <div className="py-3 px-2">
                 <Link to={`/product/${product.id}`}>
                     <p
                         className="text-sm font-bold text-gray-900 truncate hover:text-red-600 transition-colors mb-0.5"
@@ -134,26 +134,29 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 )}
 
                 {/* ── Price row + Cart button ── */}
-                <div className="flex items-center justify-between gap-2 mt-1">
+                <div className="flex items-center justify-between gap-2">
                     <div className="flex items-baseline gap-1.5">
                         <span className="text-sm font-black text-black">€{price.toFixed(2)}</span>
                         {oldPrice && (
-                            <span className="text-[11px] text-gray-300 line-through">€{oldPrice.toFixed(2)}</span>
+                            <span className="text-[10px] text-gray-300 line-through">€{oldPrice.toFixed(2)}</span>
                         )}
                     </div>
+                    <p className="text-[10px] bg-gray-100 my-1  lg:p-1 rounded-sm">-{Math.round(product.discount)}%</p>
+                </div>
 
-                    {/* Cart icon button — replaces the discount badge here */}
+                <div>
                     <button
                         onClick={handleAddToCart}
-                        className={`w-8 h-8 rounded-full flex items-center justify-center shadow-sm transition-all duration-200 hover:scale-110 active:scale-95 ${isAdded
-                            ? "bg-green-500 text-white"
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-xs w-full justify-center mt-2 font-medium shadow-sm transition-all duration-200 hover:scale-105 active:scale-95 ${isAdded
+                            ? "bg-green-600 text-white"
                             : inCart
                                 ? "bg-green-600 text-white"
-                                : "bg-black text-white hover:bg-gray-800"
+                                : "bg-black text-white hover:bg-neutral-800"
                             }`}
                         title={isAdded ? "Added!" : inCart ? "In Cart" : "Add to Cart"}
                     >
                         <FiShoppingCart size={13} />
+                        {isAdded ? "Added!" : inCart ? "In Cart" : "Add to Cart"}
                     </button>
                 </div>
             </div>

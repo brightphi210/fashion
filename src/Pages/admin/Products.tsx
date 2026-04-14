@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-    FiEdit2,
     FiEye,
     FiPlus,
     FiSearch,
@@ -27,7 +26,7 @@ const safeStr = (val: any): string => {
 };
 
 // ─── Product Detail Modal ─────────────────────────────────────────────────────
-const ProductDetailModal = ({ product, onClose, onEdit }: { product: any; onClose: () => void; onEdit: () => void }) => {
+const ProductDetailModal = ({ product, onClose }: { product: any; onClose: () => void; onEdit: () => void }) => {
     const price = parseFloat(product.price) || 0;
     const oldPrice = product.old_price ? parseFloat(product.old_price) : null;
     const discount = product.discount ? Number(product.discount) : null;
@@ -40,10 +39,10 @@ const ProductDetailModal = ({ product, onClose, onEdit }: { product: any; onClos
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
                     <h2 className="text-base font-black text-gray-900">Product Details</h2>
                     <div className="flex items-center gap-2">
-                        <button onClick={onEdit}
+                        {/* <button onClick={onEdit}
                             className="flex items-center gap-1.5 text-xs font-black px-3 py-1.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors">
                             <FiEdit2 size={11} /> Edit
-                        </button>
+                        </button> */}
                         <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
                             <FiX size={14} />
                         </button>
@@ -123,7 +122,7 @@ const DeleteModal = ({ product, onClose, onConfirm, loading }: any) => (
 );
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
-const ProductCard = ({ product, onView, onEdit, onDelete }: { product: any; onView: () => void; onEdit: () => void; onDelete: () => void }) => {
+const ProductCard = ({ product, onView, onDelete }: { product: any; onView: () => void; onEdit: () => void; onDelete: () => void }) => {
     const price = parseFloat(product.price) || 0;
     const oldPrice = product.old_price ? parseFloat(product.old_price) : null;
     const discount = product.discount ? Number(product.discount) : null;
@@ -149,10 +148,10 @@ const ProductCard = ({ product, onView, onEdit, onDelete }: { product: any; onVi
                         className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors shadow">
                         <FiEye size={14} />
                     </button>
-                    <button onClick={onEdit}
+                    {/* <button onClick={onEdit}
                         className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 transition-colors shadow">
                         <FiEdit2 size={14} />
-                    </button>
+                    </button> */}
                     <button onClick={onDelete}
                         className="w-9 h-9 rounded-xl bg-red-500 flex items-center justify-center text-white hover:bg-red-600 transition-colors shadow">
                         <FiTrash2 size={14} />

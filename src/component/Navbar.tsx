@@ -12,10 +12,9 @@ import {
   FiX,
 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
-import logo from "../assets/six.jpg";
+import logo from "../assets/six.png";
 import { useShop } from "../providers/ShopContext";
 
-// ── Static fallback categories matching your admin (Hats, Hoodies, Longsleeves, New, Pants, Shorts, T-Shirts)
 const FALLBACK_CATEGORIES = [
   { label: "Hats", slug: "hats" },
   { label: "Hoodies", slug: "hoodies" },
@@ -41,18 +40,13 @@ const Navbar = () => {
 
   const { cartCount, cartTotal, cart, removeFromCart, updateQuantity, favouriteCount } = useShop();
 
-  // Fetch categories from backend
   useEffect(() => {
     fetch(`${API_BASE}/api/categories/`)
       .then((r) => r.json())
       .then((data: { label: string; slug: string }[]) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setNavCategories(data);
-        }
+        if (Array.isArray(data) && data.length > 0) setNavCategories(data);
       })
-      .catch(() => {
-        // silently keep fallback
-      });
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -100,52 +94,51 @@ const Navbar = () => {
   return (
     <>
       <nav
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
-        style={{
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          backgroundColor: scrolled ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.82)",
-          borderBottom: scrolled ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(0,0,0,0.04)",
-          boxShadow: scrolled ? "0 2px 20px rgba(0,0,0,0.08)" : "none",
-        }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 backdrop-blur-xl border-b ${scrolled
+          ? "bg-[#080603] border-[#c9b99a]/25 shadow-[0_4px_32px_rgba(0,0,0,0.5)]"
+          : "bg-[#100e0a] border-[#c9b99a]/10"
+          }`}
       >
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-4">
 
           {/* LEFT */}
           <div className="flex items-center gap-4 flex-1">
-            <Link to="/" className="flex items-center shrink-0 w-8 h-8 rounded overflow-hidden">
-              <img src={logo} alt="Logo" className="w-full h-full object-cover" />
+            <Link to="/" className="shrink-0">
+              <img
+                src={logo}
+                alt="Logo"
+                className="w-9 h-9 rounded-md object-cover border border-[#c9b99a]/25"
+              />
             </Link>
 
-            {/* Category dropdown — desktop */}
+            {/* Category dropdown — desktop only */}
             <div ref={dropdownRef} className="hidden md:block relative shrink-0">
               <button
                 onClick={() => setDropdown((v) => !v)}
-                className="flex items-center gap-1 text-xs font-semibold text-gray-700 hover:text-red-600 transition-colors px-3 py-2 rounded-lg hover:bg-black/5"
+                className={`flex items-center gap-1 text-xs font-semibold tracking-widest uppercase px-3 py-2 rounded-md transition-all duration-200 cursor-pointer ${dropdownOpen
+                  ? "text-[#c9b99a] bg-[#c9b99a]/8"
+                  : "text-[#c9b99a]/55 hover:text-[#c9b99a] hover:bg-[#c9b99a]/5"
+                  }`}
               >
                 Category
                 <FiChevronDown
-                  size={14}
-                  style={{
-                    transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                    transition: "transform 0.2s ease",
-                  }}
+                  size={13}
+                  className={`transition-transform duration-200 ${dropdownOpen ? "rotate-180" : "rotate-0"}`}
                 />
               </button>
+
+              {/* Dropdown panel */}
               <div
-                className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden"
-                style={{
-                  opacity: dropdownOpen ? 1 : 0,
-                  transform: dropdownOpen ? "translateY(0)" : "translateY(-8px)",
-                  pointerEvents: dropdownOpen ? "auto" : "none",
-                  transition: "opacity 0.2s ease, transform 0.2s ease",
-                }}
+                className={`absolute top-[calc(100%+8px)] left-0 w-48 bg-[#1a1a18] border border-[#c9b99a]/25 rounded-lg overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.6)] transition-all duration-200 ${dropdownOpen
+                  ? "opacity-100 translate-y-0 pointer-events-auto"
+                  : "opacity-0 -translate-y-2 pointer-events-none"
+                  }`}
               >
                 {navCategories.map((cat) => (
                   <button
                     key={cat.slug}
                     onClick={() => handleCategoryClick(cat.slug)}
-                    className="w-full text-left block px-4 py-2.5 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors font-medium"
+                    className="w-full text-left px-4 py-2.5 text-sm font-medium tracking-wide uppercase text-[#c9b99a]/55 hover:text-[#c9b99a] hover:bg-[#c9b99a]/8 border-b border-[#c9b99a]/6 transition-all duration-150 cursor-pointer"
                   >
                     {cat.label}
                   </button>
@@ -153,26 +146,26 @@ const Navbar = () => {
               </div>
             </div>
 
-            {/* Search — desktop */}
+            {/* Search — desktop only */}
             <form
               onSubmit={handleSearchSubmit}
-              className="hidden md:flex flex-1 max-w-sm items-center bg-black/5 rounded-full px-4 py-2 gap-2 focus-within:bg-black/8 focus-within:ring-1 focus-within:ring-black/10 transition-all"
+              className="hidden md:flex flex-1 max-w-sm items-center bg-white/2 border border-[#c9b99a]/12 rounded-full px-4 py-2 gap-2 focus-within:border-[#c9b99a]/30 transition-all"
             >
-              <FiSearch className="text-gray-400 shrink-0" size={15} />
+              <FiSearch className="text-[#c9b99a]/55 shrink-0" size={14} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search products..."
-                className="bg-transparent text-sm outline-none w-full text-gray-700 placeholder-gray-400"
+                className="bg-transparent border-none outline-none text-sm w-full text-[#c9b99a] placeholder:text-[#c9b99a]/35 tracking-wide"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  className="text-gray-300 hover:text-gray-500 transition-colors"
+                  className="text-[#c9b99a]/40 hover:text-[#c9b99a] transition-colors cursor-pointer"
                 >
-                  <FiX size={13} />
+                  <FiX size={12} />
                 </button>
               )}
             </form>
@@ -182,17 +175,17 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-1 shrink-0">
             <Link
               to="/orders"
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 hover:text-red-600 transition-colors rounded-lg hover:bg-black/5 whitespace-nowrap"
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold tracking-widest uppercase text-[#c9b99a]/55 hover:text-[#c9b99a] rounded-md hover:bg-[#c9b99a]/5 transition-all"
             >
-              <FiPackage size={16} />
+              <FiPackage size={15} />
               Orders
             </Link>
 
             <Link
               to="/favourites"
-              className="relative p-2.5 text-gray-600 hover:text-red-600 transition-colors rounded-lg hover:bg-black/5"
+              className="relative p-2.5 text-[#c9b99a]/55 hover:text-[#c9b99a] rounded-md hover:bg-[#c9b99a]/5 transition-all"
             >
-              <FiHeart size={20} />
+              <FiHeart size={19} />
               {favouriteCount > 0 && (
                 <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-black leading-none">
                   {favouriteCount > 9 ? "9+" : favouriteCount}
@@ -202,9 +195,9 @@ const Navbar = () => {
 
             <button
               onClick={() => { setMenuOpen(false); setCartOpen((v) => !v); }}
-              className="relative p-2.5 text-black bg-black/10 hover:bg-black hover:text-white rounded-full cursor-pointer transition-all duration-200 ml-1"
+              className="relative p-2.5 ml-1 text-[#c9b99a] bg-[#c9b99a]/10 border border-[#c9b99a]/25 rounded-full hover:bg-[#c9b99a]/20 transition-all duration-200 cursor-pointer"
             >
-              <FiShoppingCart size={18} />
+              <FiShoppingCart size={17} />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-black leading-none">
                   {cartCount > 9 ? "9+" : cartCount}
@@ -217,20 +210,24 @@ const Navbar = () => {
           <div className="flex md:hidden items-center gap-2 shrink-0">
             <button
               onClick={() => { setMenuOpen(false); setCartOpen((v) => !v); }}
-              className="relative p-2 text-white bg-black rounded-full"
+              className="relative p-2 text-[#c9b99a] bg-[#c9b99a]/10 border border-[#c9b99a]/25 rounded-full transition-all cursor-pointer"
             >
-              <FiShoppingCart size={17} />
+              <FiShoppingCart size={16} />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-black leading-none">
                   {cartCount > 9 ? "9+" : cartCount}
                 </span>
               )}
             </button>
+
             <button
               onClick={() => { setCartOpen(false); setMenuOpen((v) => !v); }}
-              className="p-2 rounded-lg text-gray-700 hover:bg-black/5 transition-colors"
+              className="p-2 text-[#c9b99a] hover:bg-[#c9b99a]/5 rounded-md transition-colors cursor-pointer"
             >
-              <span style={{ display: "block", transform: menuOpen ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }}>
+              <span
+                className="block transition-transform duration-250"
+                style={{ transform: menuOpen ? "rotate(90deg)" : "rotate(0deg)" }}
+              >
                 {menuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
               </span>
             </button>
@@ -238,141 +235,149 @@ const Navbar = () => {
         </div>
       </nav>
 
+      {/* Spacer */}
       <div className="h-16" />
 
-      {/* BACKDROP */}
+      {/* ── BACKDROP ── */}
       <div
         onClick={closeAll}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 49,
-          backdropFilter: menuOpen || cartOpen ? "blur(4px)" : "blur(0px)",
-          WebkitBackdropFilter: menuOpen || cartOpen ? "blur(4px)" : "blur(0px)",
-          backgroundColor: menuOpen || cartOpen ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0)",
-          pointerEvents: menuOpen || cartOpen ? "auto" : "none",
-          transition: "backdrop-filter 0.3s ease, background-color 0.3s ease",
-        }}
+        className={`fixed inset-0 z-49 transition-all duration-300 ${menuOpen || cartOpen
+          ? "backdrop-blur-md bg-black/70 pointer-events-auto"
+          : "backdrop-blur-none bg-black/0 pointer-events-none"
+          }`}
       />
 
-      {/* CART DRAWER */}
+      {/* ── CART DRAWER ── */}
       <div
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          height: "100%",
-          width: "min(360px, 100vw)",
-          zIndex: 60,
-          display: "flex",
-          flexDirection: "column",
-          backgroundColor: "#fff",
-          boxShadow: "-8px 0 40px rgba(0,0,0,0.15)",
-          transform: cartOpen ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.35s cubic-bezier(0.4,0,0.2,1)",
-        }}
+        className={`fixed top-0 right-0 h-full z-60 flex flex-col bg-[#161614] border-l border-[#c9b99a]/25 shadow-[-12px_0_60px_rgba(0,0,0,0.7)] transition-transform duration-350 ease-[cubic-bezier(0.4,0,0.2,1)] ${cartOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        style={{ width: "min(380px, 100vw)" }}
       >
-        <div className="flex items-center justify-between px-5 shrink-0" style={{ height: 64, borderBottom: "1px solid #f0f0f0" }}>
-          <div className="flex items-center gap-2">
-            <FiShoppingCart size={18} className="text-black" />
-            <span className="font-black text-base text-black">
+        {/* Cart header */}
+        <div className="flex items-center justify-between px-5 h-16 border-b border-[#c9b99a]/12 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-[3px] h-[18px] bg-[#c9b99a] rounded-sm" />
+            <FiShoppingCart size={16} className="text-[#c9b99a]" />
+            <span className="font-bold text-base tracking-widest uppercase text-[#c9b99a]">
               My Cart{" "}
-              <span className="text-gray-400 font-semibold text-sm">({cartCount})</span>
+              <span className="text-[#c9b99a]/55 font-medium text-sm">({cartCount})</span>
             </span>
           </div>
           <button
             onClick={() => setCartOpen(false)}
-            className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[#c9b99a]/55 bg-white/5 border border-[#c9b99a]/12 hover:text-[#c9b99a] transition-colors cursor-pointer"
           >
-            <FiX size={18} className="text-gray-500" />
+            <FiX size={16} />
           </button>
         </div>
 
         {cart.length === 0 ? (
-          <div className="flex flex-col items-center justify-center flex-1 text-gray-400 px-6">
-            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-              <FiShoppingCart size={30} className="opacity-30" />
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center flex-1 px-6">
+            <div className="w-18 h-18 rounded-full bg-[#c9b99a]/6 border border-[#c9b99a]/12 flex items-center justify-center mb-4">
+              <FiShoppingCart size={26} className="text-[#c9b99a]/55" />
             </div>
-            <p className="font-black text-gray-700 text-sm mb-1">Your cart is empty</p>
-            <p className="text-xs text-center text-gray-400">Add some products and they'll appear here.</p>
+            <p className="font-bold text-[#c9b99a] text-sm tracking-widest uppercase mb-1.5">Cart is empty</p>
+            <p className="text-xs text-[#c9b99a]/55 text-center mb-6">Add some products and they'll appear here.</p>
             <button
               onClick={() => setCartOpen(false)}
-              className="mt-6 bg-black text-white font-black text-sm px-6 py-2.5 rounded-xl hover:bg-red-600 transition-colors"
+              className="bg-transparent border border-[#c9b99a]/25 text-[#c9b99a] font-bold text-xs tracking-widest uppercase px-6 py-2.5 rounded-md hover:bg-[#c9b99a]/10 transition-all cursor-pointer"
             >
               Continue Shopping
             </button>
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-y-auto" style={{ borderBottom: "1px solid #f0f0f0" }}>
+            {/* Cart items */}
+            <div className="flex-1 overflow-y-auto border-b border-[#c9b99a]/12">
               {cart.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 px-5 py-4"
-                  style={{ borderBottom: "1px solid #fafafa" }}
+                  className="flex items-center gap-3 px-5 py-3.5 border-b border-[#c9b99a]/5"
                 >
-                  <Link to={`/product/${item.id}`} onClick={() => setCartOpen(false)} className="shrink-0">
+                  <Link
+                    to={`/product/${item.id}`}
+                    onClick={() => setCartOpen(false)}
+                    className="shrink-0 hover:opacity-80 transition-opacity"
+                  >
                     <img
                       src={item.img}
                       alt={item.name}
-                      className="w-14 h-14 rounded-xl object-cover bg-gray-100 hover:opacity-80 transition-opacity"
+                      className="w-14 h-14 rounded-lg object-cover bg-[#222] border border-[#c9b99a]/12"
                     />
                   </Link>
+
                   <div className="flex-1 min-w-0">
-                    <Link to={`/product/${item.id}`} onClick={() => setCartOpen(false)}>
-                      <p className="text-xs font-bold text-gray-900 truncate hover:text-red-600 transition-colors mb-0.5">
+                    <Link
+                      to={`/product/${item.id}`}
+                      onClick={() => setCartOpen(false)}
+                      className="no-underline"
+                    >
+                      <p className="text-xs font-bold text-[#c9b99a] tracking-wide uppercase truncate mb-0.5 hover:opacity-70 transition-opacity">
                         {item.name}
                       </p>
                     </Link>
                     {item.selectedColor && (
-                      <p className="text-[10px] text-gray-400">{item.selectedColor}{item.selectedSize ? ` · ${item.selectedSize}` : ""}</p>
+                      <p className="text-[10px] text-[#c9b99a]/55 mb-1">
+                        {item.selectedColor}{item.selectedSize ? ` · ${item.selectedSize}` : ""}
+                      </p>
                     )}
-                    <p className="text-sm font-black text-black mt-1">
+                    <p className="text-sm font-black text-white">
                       €{(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end gap-2.5 shrink-0">
-                    <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-red-500 transition-colors">
-                      <FiTrash2 size={14} />
+
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-[#c9b99a]/40 hover:text-red-400 transition-colors p-1 cursor-pointer"
+                    >
+                      <FiTrash2 size={13} />
                     </button>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 bg-[#c9b99a]/6 border border-[#c9b99a]/12 rounded-md px-1 py-0.5">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-6 h-6 rounded-md border border-gray-200 flex items-center justify-center hover:border-red-400 hover:text-red-600 transition-colors"
+                        className="w-5 h-5 rounded flex items-center justify-center border border-[#c9b99a]/12 text-[#c9b99a]/55 hover:border-[#c9b99a] hover:text-[#c9b99a] transition-all cursor-pointer"
                       >
-                        <FiMinus size={9} />
+                        <FiMinus size={8} />
                       </button>
-                      <span className="w-5 text-center text-xs font-black">{item.quantity}</span>
+                      <span className="w-5 text-center text-xs font-black text-[#c9b99a]">
+                        {item.quantity}
+                      </span>
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-6 h-6 rounded-md border border-gray-200 flex items-center justify-center hover:border-red-400 hover:text-red-600 transition-colors"
+                        className="w-5 h-5 rounded flex items-center justify-center border border-[#c9b99a]/12 text-[#c9b99a]/55 hover:border-[#c9b99a] hover:text-[#c9b99a] transition-all cursor-pointer"
                       >
-                        <FiPlus size={9} />
+                        <FiPlus size={8} />
                       </button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="px-5 py-4 bg-gray-50 shrink-0">
+
+            {/* Cart footer */}
+            <div className="px-5 py-4 bg-black/30 shrink-0">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-500">Subtotal ({cartCount} item{cartCount !== 1 ? "s" : ""})</span>
-                <span className="text-xs font-semibold text-gray-700">€{cartTotal.toFixed(2)}</span>
+                <span className="text-[11px] text-[#c9b99a]/55 tracking-widest uppercase">
+                  Subtotal ({cartCount} item{cartCount !== 1 ? "s" : ""})
+                </span>
+                <span className="text-[11px] text-[#c9b99a]/55">€{cartTotal.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-black text-black">Total</span>
-                <span className="text-xl font-black text-black">€{cartTotal.toFixed(2)}</span>
+                <span className="text-sm font-bold text-[#c9b99a] tracking-widest uppercase">Total</span>
+                <span className="text-xl font-black text-white">€{cartTotal.toFixed(2)}</span>
               </div>
               <Link
                 to="/cart"
                 onClick={() => setCartOpen(false)}
-                className="block w-full text-center bg-black hover:bg-red-600 text-white font-black py-3 rounded-xl text-sm transition-colors mb-2.5"
+                className="block w-full text-center bg-[#c9b99a] text-black font-bold text-xs tracking-widest uppercase py-3 rounded-md hover:bg-[#e0d2b6] transition-colors mb-2 no-underline"
               >
                 Proceed to Checkout
               </Link>
               <button
                 onClick={() => setCartOpen(false)}
-                className="w-full text-center text-gray-500 font-semibold text-sm py-2 hover:text-black transition-colors"
+                className="w-full text-center text-[#c9b99a]/55 font-semibold text-xs tracking-widest uppercase py-2 hover:text-[#c9b99a] transition-colors bg-transparent border-none cursor-pointer"
               >
                 Continue Shopping
               </button>
@@ -381,64 +386,62 @@ const Navbar = () => {
         )}
       </div>
 
-      {/* MOBILE MENU DRAWER */}
+      {/* ── MOBILE MENU DRAWER ── */}
       <div
-        style={{
-          position: "fixed",
-          top: 0,
-          right: 0,
-          height: "100%",
-          width: 288,
-          zIndex: 55,
-          display: "flex",
-          flexDirection: "column",
-          backgroundColor: "#fff",
-          boxShadow: "-4px 0 30px rgba(0,0,0,0.12)",
-          transform: menuOpen ? "translateX(0)" : "translateX(100%)",
-          transition: "transform 0.35s cubic-bezier(0.4,0,0.2,1)",
-        }}
-        className="md:hidden"
+        className={`fixed top-0 right-0 h-full w-75 z-55 flex flex-col bg-[#161614] border-l border-[#c9b99a]/25 shadow-[-8px_0_40px_rgba(0,0,0,0.6)] transition-transform duration-350 ease-[cubic-bezier(0.4,0,0.2,1)] md:hidden ${menuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
-        <div className="flex items-center justify-between px-5 h-16 border-b border-gray-100">
-          <span className="font-black text-lg text-black">Menu</span>
-          <button onClick={() => setMenuOpen(false)} className="p-2 text-gray-500 hover:text-black">
-            <FiX size={22} />
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 h-16 border-b border-[#c9b99a]/12 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <img
+              src={logo}
+              alt="Logo"
+              className="w-8 h-8 rounded-md object-cover border border-[#c9b99a]/25"
+            />
+            <span className="font-bold text-base tracking-[0.12em] uppercase text-[#c9b99a]">Menu</span>
+          </div>
+          <button
+            onClick={() => setMenuOpen(false)}
+            className="p-2 text-[#c9b99a]/55 hover:text-[#c9b99a] transition-colors cursor-pointer"
+          >
+            <FiX size={20} />
           </button>
         </div>
 
-        <div className="px-5 py-4">
-          <form onSubmit={handleMobileSearchSubmit} className="flex items-center bg-gray-100 rounded-full px-4 py-2 gap-2">
-            <FiSearch className="text-gray-400 shrink-0" size={15} />
+        {/* Search */}
+        <div className="px-5 pt-4 pb-3">
+          <form
+            onSubmit={handleMobileSearchSubmit}
+            className="flex items-center bg-white/6 border border-[#c9b99a]/12 rounded-full px-4 py-2.5 gap-2 focus-within:border-[#c9b99a]/30 transition-all"
+          >
+            <FiSearch className="text-[#c9b99a]/55 shrink-0" size={14} />
             <input
               type="text"
               value={mobileSearchQuery}
               onChange={(e) => setMobileSearchQuery(e.target.value)}
               placeholder="Search products..."
-              className="bg-transparent text-sm outline-none w-full text-gray-700 placeholder-gray-400"
+              className="bg-transparent border-none outline-none text-sm w-full text-[#c9b99a] placeholder:text-[#c9b99a]/35 tracking-wide"
             />
-            {mobileSearchQuery ? (
-              <button type="submit" className="text-gray-500 hover:text-black">
-                <FiSearch size={13} />
-              </button>
-            ) : null}
           </form>
         </div>
 
-        <div className="px-5 pb-2 overflow-y-auto flex-1">
-          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Categories</p>
-          <ul className="space-y-0.5">
+        {/* Categories */}
+        <div className="px-5 pt-2 flex-1 overflow-y-auto">
+          <p className="text-[11px] font-bold text-[#c9b99a]/55 tracking-[0.16em] uppercase mb-2">
+            Categories
+          </p>
+          <div className="w-full h-px bg-gradient-to-r from-transparent via-[#c9b99a]/20 to-transparent mb-2" />
+          <ul className="list-none m-0 p-0 flex flex-col gap-0.5">
             {navCategories.map((cat, i) => (
               <li key={cat.slug}>
                 <button
-                  onClick={() => {
-                    navigate(`/search?q=${encodeURIComponent(cat.slug)}`);
-                    setMenuOpen(false);
-                  }}
-                  className="w-full text-left block px-3 py-2.5 rounded-lg text-gray-700 font-medium hover:bg-red-50 hover:text-red-600 transition-colors text-sm"
+                  onClick={() => { navigate(`/search?q=${encodeURIComponent(cat.slug)}`); setMenuOpen(false); }}
+                  className="w-full text-left px-3 py-2.5 rounded-md text-sm font-semibold tracking-wide uppercase text-[#c9b99a]/55 hover:text-[#c9b99a] hover:bg-[#c9b99a]/8 transition-all duration-150 cursor-pointer"
                   style={{
                     opacity: menuOpen ? 1 : 0,
-                    transform: menuOpen ? "translateX(0)" : "translateX(20px)",
-                    transition: `opacity 0.3s ease ${0.05 * i + 0.15}s, transform 0.3s ease ${0.05 * i + 0.15}s`,
+                    transform: menuOpen ? "translateX(0)" : "translateX(16px)",
+                    transition: `opacity 0.3s ease ${0.04 * i + 0.1}s, transform 0.3s ease ${0.04 * i + 0.1}s, background 0.15s, color 0.15s`,
                   }}
                 >
                   {cat.label}
@@ -448,25 +451,28 @@ const Navbar = () => {
           </ul>
         </div>
 
-        <div className="mx-5 my-2 border-t border-gray-100" />
+        {/* Divider */}
+        <div className="mx-5 my-2 h-px bg-gradient-to-r from-transparent via-[#c9b99a]/20 to-transparent" />
 
-        <div className="px-5 flex flex-col gap-1 pb-6">
+        {/* Bottom links */}
+        <div className="px-5 pb-6 flex flex-col gap-0.5">
           <Link
             to="/orders"
             onClick={() => setMenuOpen(false)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold tracking-widest uppercase text-[#c9b99a]/55 hover:text-[#c9b99a] hover:bg-[#c9b99a]/5 transition-all no-underline"
           >
-            <FiPackage size={17} /> Order History
+            <FiPackage size={16} />
+            Order History
           </Link>
           <Link
             to="/favourites"
             onClick={() => setMenuOpen(false)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-700 hover:bg-gray-50 text-sm font-medium"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold tracking-widest uppercase text-[#c9b99a]/55 hover:text-[#c9b99a] hover:bg-[#c9b99a]/5 transition-all no-underline"
           >
-            <FiHeart size={17} />
+            <FiHeart size={16} />
             Wishlist
             {favouriteCount > 0 && (
-              <span className="ml-auto bg-red-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
+              <span className="ml-auto bg-red-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">
                 {favouriteCount}
               </span>
             )}

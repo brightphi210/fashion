@@ -103,7 +103,7 @@ export const useUpdateProduct = () => {
   const updateProduct = useMutation({
     mutationFn: async (data: any) => {
       const token = (await localStorage.getItem("sxiAccessToken")) || ""
-      return post_requests(`products/${data.id}/`, data, token)
+      return patch_requests(`products/${data.id}/`, data, token)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] })

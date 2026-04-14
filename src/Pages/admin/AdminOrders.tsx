@@ -8,9 +8,25 @@ import {
 } from "react-icons/fi";
 import { useGetOrders, useUpdateOrderStatus } from "../../hooks/mutations/allMutation";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
 
-// ─── Toast — centered pill style matching home page ───────────────────────────
+// ─── Email notification helper ────────────────────────────────────────────────
+const sendStatusEmail = async (orderId: number): Promise<void> => {
+    const token = localStorage.getItem("sxiAccessToken");
+    const res = await fetch(`${API_BASE}/api/orders/${orderId}/notify-status/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+    });
+    if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.detail ?? `Email send failed (${res.status})`);
+    }
+};
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
 type Toast = { id: number; message: string; type: "success" | "error" };
 
 const ToastContainer = ({ toasts, remove }: { toasts: Toast[]; remove: (id: number) => void }) => (
@@ -22,7 +38,7 @@ const ToastContainer = ({ toasts, remove }: { toasts: Toast[]; remove: (id: numb
             }
             .toast-pill { animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
         `}</style>
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] flex flex-col items-center gap-2 pointer-events-none w-max max-w-[90vw]">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-200 flex flex-col items-center gap-2 pointer-events-none w-max max-w-[90vw]">
             {toasts.map((t) => (
                 <div
                     key={t.id}
@@ -97,25 +113,49 @@ const StatusDropdown = ({
     const [open, setOpen] = useState(false);
     const [local, setLocal] = useState(current);
     const [loading, setLoading] = useState(false);
+    const [emailState, setEmailState] = useState<"idle" | "sending" | "sent" | "failed">("idle");
     const update = useUpdateOrderStatus();
     const cfg = STATUS_CFG[local] ?? STATUS_CFG.confirmed;
 
     const select = async (s: string) => {
         setOpen(false);
         if (s === local) return;
+
         const prev = local;
         setLocal(s);
         setLoading(true);
+        setEmailState("idle");
+
         try {
+            // 1. Update the order status
             await update.mutateAsync({ orderId, status: s });
             onChange?.(s);
+
             const label = STATUS_CFG[s]?.label ?? s;
-            onToast(`#${orderNumber} → ${label} · Email sent to customer`, "success");
+            onToast(`#${orderNumber} → ${label}`, "success");
+
+            // 2. Send email notification to customer
+            setEmailState("sending");
+            try {
+                await sendStatusEmail(orderId);
+                setEmailState("sent");
+                onToast(`📧 Email sent to customer for order #${orderNumber}`, "success");
+            } catch (emailErr: any) {
+                setEmailState("failed");
+                onToast(
+                    `Status updated but email failed: ${emailErr?.message ?? "unknown error"}`,
+                    "error"
+                );
+            }
         } catch {
+            // Status update itself failed — roll back
             setLocal(prev);
+            setEmailState("idle");
             onToast("Failed to update status. Please try again.", "error");
         } finally {
             setLoading(false);
+            // Reset email indicator after a few seconds
+            setTimeout(() => setEmailState("idle"), 5000);
         }
     };
 
@@ -126,21 +166,51 @@ const StatusDropdown = ({
                 disabled={loading}
                 className={`inline-flex items-center gap-1.5 text-[11px] font-black px-3 py-1.5 rounded-full border-2 transition-all ${cfg.color} ${cfg.bg} ${cfg.border} hover:shadow-sm disabled:opacity-60`}
             >
-                {loading
-                    ? <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    : <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                }
+                {loading ? (
+                    <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : emailState === "sending" ? (
+                    <FiMail size={10} className="animate-pulse" />
+                ) : emailState === "sent" ? (
+                    <FiMail size={10} className="text-emerald-500" />
+                ) : emailState === "failed" ? (
+                    <FiAlertCircle size={10} className="text-red-400" />
+                ) : (
+                    <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                )}
                 {cfg.label}
                 <FiChevronDown size={9} className={`transition-transform ml-0.5 ${open ? "rotate-180" : ""}`} />
             </button>
 
+            {/* Email status micro-indicator */}
+            {emailState === "sending" && (
+                <span className="absolute -top-5 left-0 text-[9px] text-amber-500 font-bold whitespace-nowrap animate-pulse">
+                    Sending email…
+                </span>
+            )}
+            {emailState === "sent" && (
+                <span className="absolute -top-5 left-0 text-[9px] text-emerald-500 font-bold whitespace-nowrap">
+                    ✓ Email sent
+                </span>
+            )}
+            {emailState === "failed" && (
+                <span className="absolute -top-5 left-0 text-[9px] text-red-400 font-bold whitespace-nowrap">
+                    ✗ Email failed
+                </span>
+            )}
+
             {open && (
                 <>
                     <div className="fixed inset-0" onClick={() => setOpen(false)} />
-                    <div className="absolute left-0 top-full mt-1.5 z-40 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden min-w-[160px]">
+                    <div className="absolute left-0 top-full mt-1.5 z-40 bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden min-w-[180px]">
                         <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest px-3 py-2.5 border-b border-gray-50">
                             Update Status
                         </p>
+                        <div className="px-3 py-2 border-b border-gray-50">
+                            <div className="flex items-center gap-1.5 text-[9px] text-gray-400 font-semibold">
+                                <FiMail size={9} />
+                                Customer will be notified by email
+                            </div>
+                        </div>
                         {ALL_STATUSES.map(s => {
                             const c = STATUS_CFG[s];
                             const isActive = s === local;
@@ -248,8 +318,8 @@ const OrderModal = ({ order, onClose }: { order: any; onClose: () => void }) => 
                                             </p>
                                         </div>
                                         <div className="text-right shrink-0">
-                                            <p className="text-sm font-black text-gray-900">${parseFloat(item.subtotal).toFixed(2)}</p>
-                                            <p className="text-[10px] text-gray-400">${parseFloat(item.unit_price).toFixed(2)} ea.</p>
+                                            <p className="text-sm font-black text-gray-900">€{parseFloat(item.subtotal).toFixed(2)}</p>
+                                            <p className="text-[10px] text-gray-400">€{parseFloat(item.unit_price).toFixed(2)} ea.</p>
                                         </div>
                                     </div>
                                 ))}
@@ -262,15 +332,15 @@ const OrderModal = ({ order, onClose }: { order: any; onClose: () => void }) => 
                         <div className="space-y-2">
                             <div className="flex justify-between text-xs">
                                 <span className="text-gray-400">Subtotal</span>
-                                <span className="font-bold">${parseFloat(order.subtotal).toFixed(2)}</span>
+                                <span className="font-bold">€{parseFloat(order.subtotal).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-xs">
                                 <span className="text-gray-400">Shipping ({order.shipping_method})</span>
-                                <span className="font-bold">${parseFloat(order.shipping_fee).toFixed(2)}</span>
+                                <span className="font-bold">€{parseFloat(order.shipping_fee).toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm font-black pt-3 border-t border-gray-700 mt-2">
                                 <span>Total</span>
-                                <span>${parseFloat(order.total_amount).toFixed(2)}</span>
+                                <span>€{parseFloat(order.total_amount).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -303,7 +373,7 @@ const OrderCard = ({
 
     return (
         <div className="bg-white rounded-2xl border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all duration-200">
-            <div className={`h-1 w-full ${statusCfg.dot}`} />
+            <div className={`h-1 w-full rounded-t-2xl ${statusCfg.dot}`} />
             <div className="p-5">
                 <div className="flex items-start justify-between mb-4">
                     <div>
@@ -313,7 +383,7 @@ const OrderCard = ({
                         </p>
                     </div>
                     <div className="text-right">
-                        <p className="text-lg font-black text-gray-900">${total.toFixed(2)}</p>
+                        <p className="text-lg font-black text-gray-900">€{total.toFixed(2)}</p>
                         <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border capitalize ${payCfg.color} ${payCfg.bg} ${payCfg.border}`}>
                             {order.payment_status}
                         </span>
@@ -366,7 +436,7 @@ const AdminOrders = () => {
     const addToast = (message: string, type: "success" | "error" = "success") => {
         const id = Date.now();
         setToasts(prev => [...prev, { id, message, type }]);
-        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
     };
     const removeToast = (id: number) => setToasts(prev => prev.filter(t => t.id !== id));
 
@@ -399,7 +469,7 @@ const AdminOrders = () => {
             <div className="mb-6">
                 <h1 className="text-2xl font-black text-gray-900 tracking-tight">Orders</h1>
                 <p className="text-sm text-gray-400 mt-0.5">
-                    {allOrders.length} total · ${totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2 })} revenue
+                    {allOrders.length} total · €{totalRevenue.toLocaleString("en-US", { minimumFractionDigits: 2 })} revenue
                 </p>
             </div>
 

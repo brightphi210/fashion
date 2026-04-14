@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import AddEditProductModal from "../../component/AddEditProductModal";
 import { useGetOrders, useGetProducts } from "../../hooks/mutations/allMutation";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
 const getMediaUrl = (path: any) => {
     if (!path || typeof path !== "string") return "";
     if (path.startsWith("http")) return path;

@@ -16,6 +16,7 @@ import OrderSuccess from './Pages/OrderSuccess'
 import OTPVerify from './Pages/OTPVerify'
 import Product from './Pages/Product'
 import SearchResults from './Pages/Searchresults'
+import ShippingPolicy from './Pages/ShippinPolicy'
 import AuthProvider from './providers/AuthProvider'
 import ProtectedRoute from './providers/ProtectedRoute'
 import { ShopProvider } from './providers/ShopContext'
@@ -135,6 +136,7 @@ const App = () => {
               <Route path='/search' element={<SearchResults />} />
               <Route path='/category/:slug' element={<Categories />} />
               <Route path='/product/:id' element={<Product />} />
+              <Route path='/shipping-policy' element={<ShippingPolicy />} />
               <Route
                 path="*"
                 element={

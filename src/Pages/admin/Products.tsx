@@ -8,8 +8,8 @@ import AddProductModal from "../../component/AddProductModal";
 import EditProductTextModal from "../../component/EditProductModal";
 import { useDeleteProduct, useGetProducts } from "../../hooks/mutations/allMutation";
 
-// const API_BASE = import.meta.env.VITE_API_URL ?? "http://api.6ixunit.store";
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000/";
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://api.6ixunit.store";
+// const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 const getMediaUrl = (path: any) => {
     if (!path || typeof path !== "string") return "";
     if (path.startsWith("http")) return path;

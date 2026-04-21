@@ -5,7 +5,7 @@ import {
 } from "react-icons/fi";
 import { useCreateProduct, useGetCategories } from "../hooks/mutations/allMutation";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
+// const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
 const safeStr = (val: any): string => {
     if (!val) return "";
     if (typeof val === "string") return val;

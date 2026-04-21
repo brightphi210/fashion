@@ -2,9 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { FiChevronDown, FiLoader, FiPlus, FiX } from "react-icons/fi";
+import { toast, ToastContainer } from "react-toastify";
 
-// const API_BASE = import.meta.env.VITE_API_URL ?? "http://api.6ixunit.store";
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
+const API_BASE = import.meta.env.VITE_API_URL ?? "http://api.6ixunit.store";
+// const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 const PRESET_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "28", "30", "32", "34", "36", "38", "40", "One Size"];
 const PRESET_COLORS = [
@@ -79,7 +80,9 @@ const EditProductTextModal = ({ product, onClose }: Props) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["products"] });
-            onClose();
+            toast.success("Product updated successfully!");
+            setTimeout(() => onClose(), 1200);
+
         },
         onError: (err: any) => {
             const detail = err?.response?.data;
@@ -104,11 +107,11 @@ const EditProductTextModal = ({ product, onClose }: Props) => {
 
     const removeSize = (name: string) => setSizes(prev => prev.filter(s => s.name !== name));
 
-    const addPresetSize = (name: string) => {
-        if (!sizes.find(s => s.name === name)) {
-            setSizes(prev => [...prev, { name, is_available: true }]);
-        }
-    };
+    // const addPresetSize = (name: string) => {
+    //     if (!sizes.find(s => s.name === name)) {
+    //         setSizes(prev => [...prev, { name, is_available: true }]);
+    //     }
+    // };
 
     const addCustomSize = () => {
         const name = customSize.trim();
@@ -158,7 +161,7 @@ const EditProductTextModal = ({ product, onClose }: Props) => {
         return () => window.removeEventListener("keydown", h);
     }, [onClose]);
 
-    const availableSizePresets = PRESET_SIZES.filter(s => !sizes.find(x => x.name === s));
+    // const availableSizePresets = PRESET_SIZES.filter(s => !sizes.find(x => x.name === s));
     const availableColorPresets = PRESET_COLORS.filter(c => !colors.find(x => x.name === c));
 
     return (
@@ -167,6 +170,7 @@ const EditProductTextModal = ({ product, onClose }: Props) => {
             style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
             onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
+            <ToastContainer theme="light" />
             <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[92vh]">
 
                 {/* Header */}

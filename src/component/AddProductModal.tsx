@@ -1,18 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
     FiCheck, FiChevronDown, FiImage, FiPlus,
-    FiTrash2,
-    FiUploadCloud,
-    FiX,
+    FiTrash2, FiUploadCloud, FiX,
 } from "react-icons/fi";
-import { useCreateProduct, useGetCategories, useUpdateProduct } from "../hooks/mutations/allMutation";
+import { useCreateProduct, useGetCategories } from "../hooks/mutations/allMutation";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
-const getMediaUrl = (path: any) => {
-    if (!path || typeof path !== "string") return "";
-    if (path.startsWith("http")) return path;
-    return `${API_BASE}/media/${path}`;
-};
 const safeStr = (val: any): string => {
     if (!val) return "";
     if (typeof val === "string") return val;
@@ -21,23 +14,20 @@ const safeStr = (val: any): string => {
 };
 
 const PRESET_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "28", "30", "32", "34", "36", "38", "40", "One Size"];
-
 const PRESET_COLORS = [
     "Black", "White", "Grey", "Navy", "Royal Blue", "Sky Blue", "Red", "Burgundy",
     "Green", "Olive", "Khaki", "Beige", "Tan", "Brown", "Orange", "Yellow",
     "Pink", "Purple", "Cream", "Charcoal", "Camo", "Mint", "Coral", "Gold",
 ];
 
-interface Props { onClose: () => void; editProduct?: any; }
+interface Props { onClose: () => void; }
 
-const AddEditProductModal = ({ onClose, editProduct }: Props) => {
+const AddProductModal = ({ onClose }: Props) => {
     const { categories } = useGetCategories();
     const allCats: any[] = Array.isArray(categories?.data) ? categories.data : [];
     const createProduct = useCreateProduct();
-    const updateProduct = useUpdateProduct();
     const mainImgRef = useRef<HTMLInputElement>(null);
     const galleryRef = useRef<HTMLInputElement>(null);
-    const isEdit = !!editProduct;
 
     const [form, setForm] = useState({ name: "", price: "", old_price: "", discount: "", description: "", tag: "", category: "" });
     const [isAvailable, setIsAvailable] = useState(true);
@@ -52,30 +42,18 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
-    useEffect(() => {
-        if (!editProduct) return;
-        setForm({
-            name: safeStr(editProduct.name), price: String(editProduct.price ?? ""),
-            old_price: String(editProduct.old_price ?? ""), discount: String(editProduct.discount ?? ""),
-            description: safeStr(editProduct.description), tag: safeStr(editProduct.tag),
-            category: String(editProduct.category?.id ?? editProduct.category ?? ""),
-        });
-        setIsAvailable(editProduct.is_available ?? true);
-        setSelectedSizes(editProduct.sizes?.map((s: any) => safeStr(s)) ?? []);
-        setColors(editProduct.colors?.map((c: any) => safeStr(c)) ?? []);
-        if (editProduct.img) setMainImgPreview(getMediaUrl(editProduct.img));
-    }, [editProduct]);
-
     const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
     const toggleSize = (s: string) => setSelectedSizes(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
-    const addCustomSize = () => { const s = customSize.trim(); if (s && !selectedSizes.includes(s)) setSelectedSizes(p => [...p, s]); setCustomSize(""); };
-
+    const addCustomSize = () => {
+        const s = customSize.trim();
+        if (s && !selectedSizes.includes(s)) setSelectedSizes(p => [...p, s]);
+        setCustomSize("");
+    };
     const addColor = () => {
         const c = colorDropdown.trim();
         if (c && !colors.includes(c)) setColors(p => [...p, c]);
         setColorDropdown("");
     };
-
     const handleMainImg = (e: React.ChangeEvent<HTMLInputElement>) => {
         const f = e.target.files?.[0]; if (!f) return;
         setMainImgFile(f); setMainImgPreview(URL.createObjectURL(f));
@@ -95,15 +73,10 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
             setError("Name, price, and category are required.");
             return;
         }
-        if (selectedSizes.length === 0) {
-            setError("Please select at least one size.");
-            return;
-        }
-        if (colors.length === 0) {
-            setError("Please add at least one color.");
-            return;
-        }
+        if (selectedSizes.length === 0) { setError("Please select at least one size."); return; }
+        if (colors.length === 0) { setError("Please add at least one color."); return; }
         setError("");
+
         const fd = new FormData();
         fd.append("name", form.name);
         fd.append("price", form.price);
@@ -117,9 +90,9 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
         colors.forEach(c => fd.append("colors", c));
         if (mainImgFile) fd.append("img", mainImgFile);
         galleryFiles.forEach((f, i) => fd.append(`images[${i}]`, f));
+
         try {
-            if (isEdit) await updateProduct.mutateAsync({ id: editProduct.id, data: fd });
-            else await createProduct.mutateAsync(fd);
+            await createProduct.mutateAsync(fd);
             setSuccess(true);
             setTimeout(() => onClose(), 900);
         } catch (e: any) {
@@ -127,17 +100,16 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
         }
     };
 
-    const isPending = createProduct.isPending || updateProduct.isPending;
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}>
             <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto shadow-2xl">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
                     <div>
-                        <h2 className="text-base font-black text-gray-900">{isEdit ? "Edit Product" : "Add New Product"}</h2>
-                        <p className="text-xs text-gray-400">{isEdit ? "Update product details" : "Fill in the details below"}</p>
+                        <h2 className="text-base font-black text-gray-900">Add New Product</h2>
+                        <p className="text-xs text-gray-400">Fill in the details below</p>
                     </div>
                     <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
                         <FiX size={14} />
@@ -171,7 +143,9 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
 
                     {/* Gallery Images */}
                     <div>
-                        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2">Gallery Images <span className="normal-case font-normal text-gray-300">(optional)</span></p>
+                        <p className="text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
+                            Gallery Images <span className="normal-case font-normal text-gray-300">(optional)</span>
+                        </p>
                         <div className="flex gap-2 flex-wrap">
                             {galleryPreviews.map((src, i) => (
                                 <div key={i} className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-gray-100 group shrink-0">
@@ -193,13 +167,18 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
                     {/* Name */}
                     <div>
                         <label className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-1.5">Product Name *</label>
-                        <input value={form.name} onChange={e => set("name", e.target.value)} placeholder="e.g. Premium Cotton T-Shirt"
+                        <input value={form.name} onChange={e => set("name", e.target.value)}
+                            placeholder="e.g. Premium Cotton T-Shirt"
                             className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300" />
                     </div>
 
                     {/* Price row */}
                     <div className="grid grid-cols-3 gap-3">
-                        {[{ k: "price", label: "Price *", ph: "0.00" }, { k: "old_price", label: "Old Price", ph: "0.00" }, { k: "discount", label: "Discount (%)", ph: "0" }].map(({ k, label, ph }) => (
+                        {[
+                            { k: "price", label: "Price *", ph: "0.00" },
+                            { k: "old_price", label: "Old Price", ph: "0.00" },
+                            { k: "discount", label: "Discount (%)", ph: "0" },
+                        ].map(({ k, label, ph }) => (
                             <div key={k}>
                                 <label className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-1.5">{label}</label>
                                 <input type="number" value={(form as any)[k]} onChange={e => set(k, e.target.value)} placeholder={ph}
@@ -216,29 +195,29 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
                                 <select value={form.category} onChange={e => set("category", e.target.value)}
                                     className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:border-black transition-colors appearance-none bg-white">
                                     <option value="">Select category</option>
-                                    {allCats.map((cat: any) => <option key={cat.id} value={cat.id}>{safeStr(cat.label ?? cat.name)}</option>)}
+                                    {allCats.map((cat: any) => (
+                                        <option key={cat.id} value={cat.id}>{safeStr(cat.label ?? cat.name)}</option>
+                                    ))}
                                 </select>
                                 <FiChevronDown size={13} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                             </div>
                         </div>
                         <div>
-                            <label className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-1.5">Tag <span className="normal-case font-normal text-gray-300">(optional)</span></label>
+                            <label className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-1.5">
+                                Tag <span className="normal-case font-normal text-gray-300">(optional)</span>
+                            </label>
                             <input value={form.tag} onChange={e => set("tag", e.target.value)} placeholder="New, Sale, Hot…"
                                 className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300" />
                         </div>
                     </div>
 
-                    {/* Availability Toggle */}
+                    {/* Availability */}
                     <div>
                         <label className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-2">Availability</label>
-                        <button
-                            type="button"
-                            onClick={() => setIsAvailable(p => !p)}
+                        <button type="button" onClick={() => setIsAvailable(p => !p)}
                             className={`relative inline-flex items-center gap-3 w-full border-2 rounded-xl px-4 py-3 transition-all ${isAvailable
                                 ? "border-green-200 bg-green-50 hover:border-green-300"
-                                : "border-gray-200 bg-gray-50 hover:border-gray-300"
-                                }`}
-                        >
+                                : "border-gray-200 bg-gray-50 hover:border-gray-300"}`}>
                             <div className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${isAvailable ? "bg-green-500" : "bg-gray-300"}`}>
                                 <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${isAvailable ? "translate-x-5" : "translate-x-0"}`} />
                             </div>
@@ -253,22 +232,18 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
                         </button>
                     </div>
 
-                    {/* Sizes — REQUIRED */}
+                    {/* Sizes */}
                     <div>
                         <label className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-2">
-                            Sizes *{" "}
-                            <span className="normal-case font-normal text-gray-300">— tap to toggle</span>
-                            {selectedSizes.length === 0 && (
-                                <span className="ml-2 normal-case font-bold text-red-400">required</span>
-                            )}
+                            Sizes * <span className="normal-case font-normal text-gray-300">— tap to toggle</span>
+                            {selectedSizes.length === 0 && <span className="ml-2 normal-case font-bold text-red-400">required</span>}
                         </label>
                         <div className="flex gap-2 flex-wrap mb-3">
                             {PRESET_SIZES.map(s => (
                                 <button key={s} type="button" onClick={() => toggleSize(s)}
                                     className={`px-3 py-1.5 rounded-xl text-xs font-black border-2 transition-all select-none ${selectedSizes.includes(s)
                                         ? "border-black bg-black text-white"
-                                        : "border-gray-200 text-gray-500 hover:border-gray-400 bg-white"
-                                        }`}>
+                                        : "border-gray-200 text-gray-500 hover:border-gray-400 bg-white"}`}>
                                     {s}
                                     {selectedSizes.includes(s) && <FiCheck size={9} className="inline ml-1" />}
                                 </button>
@@ -276,7 +251,8 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
                         </div>
                         <div className="flex gap-2">
                             <input value={customSize} onChange={e => setCustomSize(e.target.value)}
-                                onKeyDown={e => e.key === "Enter" && addCustomSize()} placeholder="Custom size…"
+                                onKeyDown={e => e.key === "Enter" && addCustomSize()}
+                                placeholder="Custom size…"
                                 className="flex-1 border-2 border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-800 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300" />
                             <button onClick={addCustomSize} className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-black text-gray-600 transition-colors">Add</button>
                         </div>
@@ -292,21 +268,16 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
                         )}
                     </div>
 
-                    {/* Colors — REQUIRED, dropdown */}
+                    {/* Colors */}
                     <div>
                         <label className="text-xs font-black text-gray-500 uppercase tracking-widest block mb-2">
                             Colors *
-                            {colors.length === 0 && (
-                                <span className="ml-2 normal-case font-bold text-red-400">required</span>
-                            )}
+                            {colors.length === 0 && <span className="ml-2 normal-case font-bold text-red-400">required</span>}
                         </label>
                         <div className="flex gap-2">
                             <div className="relative flex-1">
-                                <select
-                                    value={colorDropdown}
-                                    onChange={e => setColorDropdown(e.target.value)}
-                                    className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:border-black transition-colors appearance-none bg-white"
-                                >
+                                <select value={colorDropdown} onChange={e => setColorDropdown(e.target.value)}
+                                    className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:border-black transition-colors appearance-none bg-white">
                                     <option value="">Select a color…</option>
                                     {PRESET_COLORS.filter(c => !colors.includes(c)).map(c => (
                                         <option key={c} value={c}>{c}</option>
@@ -314,11 +285,8 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
                                 </select>
                                 <FiChevronDown size={13} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                             </div>
-                            <button
-                                onClick={addColor}
-                                disabled={!colorDropdown}
-                                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-black text-gray-600 transition-colors flex items-center gap-1"
-                            >
+                            <button onClick={addColor} disabled={!colorDropdown}
+                                className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-xs font-black text-gray-600 transition-colors flex items-center gap-1">
                                 <FiPlus size={12} /> Add
                             </button>
                         </div>
@@ -326,7 +294,8 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
                             <div className="flex gap-1.5 flex-wrap mt-2.5">
                                 {colors.map(c => (
                                     <span key={c} className="flex items-center gap-1 text-[10px] font-black bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1 rounded-full">
-                                        {c}<button onClick={() => setColors(p => p.filter(x => x !== c))} className="hover:opacity-60"><FiX size={9} /></button>
+                                        {c}
+                                        <button onClick={() => setColors(p => p.filter(x => x !== c))} className="hover:opacity-60"><FiX size={9} /></button>
                                     </span>
                                 ))}
                             </div>
@@ -341,15 +310,19 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
                             className="w-full border-2 border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-gray-800 focus:outline-none focus:border-black transition-colors placeholder:text-gray-300 resize-none" />
                     </div>
 
-                    {error && <p className="text-xs text-red-500 font-bold bg-red-50 border border-red-100 px-3.5 py-2.5 rounded-xl">{error}</p>}
+                    {error && (
+                        <p className="text-xs text-red-500 font-bold bg-red-50 border border-red-100 px-3.5 py-2.5 rounded-xl">{error}</p>
+                    )}
 
-                    <button onClick={handleSubmit} disabled={isPending || success}
-                        className={`w-full py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 ${success ? "bg-green-500 text-white" : "bg-black hover:bg-gray-800 text-white disabled:opacity-50"
-                            }`}>
+                    <button onClick={handleSubmit} disabled={createProduct.isPending || success}
+                        className={`w-full py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 ${success
+                            ? "bg-green-500 text-white"
+                            : "bg-black hover:bg-gray-800 text-white disabled:opacity-50"}`}>
                         {success
-                            ? <><FiCheck size={15} />{isEdit ? "Updated!" : "Product Created!"}</>
-                            : isPending ? (isEdit ? "Updating…" : "Creating…")
-                                : <><FiPlus size={15} />{isEdit ? "Update Product" : "Create Product"}</>
+                            ? <><FiCheck size={15} /> Product Created!</>
+                            : createProduct.isPending
+                                ? "Creating…"
+                                : <><FiPlus size={15} /> Create Product</>
                         }
                     </button>
                 </div>
@@ -358,4 +331,4 @@ const AddEditProductModal = ({ onClose, editProduct }: Props) => {
     );
 };
 
-export default AddEditProductModal;
+export default AddProductModal;

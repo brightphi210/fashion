@@ -60,6 +60,24 @@ export const useGetOrders = () => {
   };
 };
 
+export const useGetAdminOrders = () => {
+  const { data, isLoading, isError, isFetched, refetch } = useQuery({
+    queryKey: ["admin-orders"],
+    queryFn: async () => {
+      const token = (await localStorage.getItem("sxiAccessToken")) || "";
+      return get_requests("admin/orders/", token);
+    },
+  });
+
+  return {
+    adminOrders: data,
+    isLoading,
+    isError,
+    isFetched,
+    refetch,
+  };
+};
+
 export const useGetSingleProduct = (productId: number) => {
   const { data, isLoading, isError, isFetched, refetch } = useQuery({
     queryKey: ["products"],

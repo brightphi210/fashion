@@ -155,7 +155,7 @@ const PhoneCodeDropdown = ({ value, onChange, dialCodes, loading }: {
         type="button"
         onClick={() => setOpen((o) => !o)}
         disabled={loading}
-        className="h-full flex items-center gap-1.5 px-3 text-sm font-medium min-w-[90px] border-r border-[#c9b99a]/15 text-[#c9b99a]/70 disabled:opacity-50 cursor-pointer"
+        className="h-full flex items-center gap-1.5 px-3 text-sm font-medium min-w-22.5 border-r border-[#c9b99a]/15 text-[#c9b99a]/70 disabled:opacity-50 cursor-pointer"
       >
         {loading
           ? <span className="w-3 h-3 border border-[#c9b99a]/40 border-t-transparent rounded-full animate-spin" />
@@ -373,7 +373,7 @@ const Checkout = () => {
           </nav>
 
           <div className="flex items-center gap-2.5 mb-6">
-            <div className="w-[3px] h-5 bg-[#c9b99a] rounded-sm" />
+            <div className="w-0.75 h-5 bg-[#c9b99a] rounded-sm" />
             <h1 className="text-base font-black text-[#c9b99a] tracking-widest uppercase">Checkout</h1>
           </div>
 
@@ -426,8 +426,8 @@ const Checkout = () => {
                   <div className="sm:col-span-2">
                     <LocationSelect label="Country" value={info.country} onChange={(v) => setInfo({ ...info, country: v })} options={countries} placeholder={loadingCountries ? "Loading…" : "Select country"} loading={loadingCountries} />
                   </div>
-                  <LocationSelect label="State / Province" value={info.state} onChange={(v) => setInfo({ ...info, state: v })} options={states} placeholder={info.country ? (loadingStates ? "Loading…" : "Select state") : "Select country first"} loading={loadingStates} disabled={!info.country} required={false} />
-                  <LocationSelect label="City" value={info.city} onChange={(v) => setInfo({ ...info, city: v })} options={cities} placeholder={info.state ? (loadingCities ? "Loading…" : "Select city") : "Select state first"} loading={loadingCities} disabled={!info.state} />
+                  <LocationSelect label="State / Province" value={info.state} onChange={(v) => setInfo({ ...info, state: v })} options={states} placeholder={info.country ? (loadingStates ? "Loading…" : "Select state") : "Select country first"} loading={loadingStates} disabled={!info.country} />
+                  <LocationSelect label="City" value={info.city} onChange={(v) => setInfo({ ...info, city: v })} options={cities} placeholder={info.state ? (loadingCities ? "Loading…" : "Select city") : "Select state first"} loading={loadingCities} disabled={!info.state} required={false} />
                   <Field label="ZIP / Postal Code" value={info.zip} onChange={(v) => setInfo({ ...info, zip: v })} placeholder="10001" />
                 </div>
               </div>
@@ -536,7 +536,7 @@ const Checkout = () => {
             <div className="lg:w-72 shrink-0">
               <div className="border border-[#c9b99a]/12 rounded-2xl p-5 sticky top-24">
                 <div className="flex items-center gap-2.5 mb-4">
-                  <div className="w-[3px] h-4 bg-[#c9b99a] rounded-sm" />
+                  <div className="w-0.75 h-4 bg-[#c9b99a] rounded-sm" />
                   <h2 className="font-black text-sm text-[#c9b99a] tracking-widest uppercase">Order Summary</h2>
                 </div>
 
@@ -605,7 +605,6 @@ const Checkout = () => {
             </div>
           </div>
         </div>
-
         <Footer />
       </div>
     </div>

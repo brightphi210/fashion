@@ -107,7 +107,7 @@ const Navbar = () => {
               <img
                 src={logo}
                 alt="Logo"
-                className="w-9 h-9 rounded-md object-cover border border-[#c9b99a]/25"
+                className="w-14 h-14 rounded-md object-cover border border-[#c9b99a]/25"
               />
             </Link>
 
@@ -397,7 +397,7 @@ const Navbar = () => {
             <img
               src={logo}
               alt="Logo"
-              className="w-8 h-8 rounded-md object-cover border border-[#c9b99a]/25"
+              className="w-16 h-16 rounded-md object-cover border border-[#c9b99a]/25"
             />
             <span className="font-bold text-base tracking-[0.12em] uppercase text-[#c9b99a]">Menu</span>
           </div>

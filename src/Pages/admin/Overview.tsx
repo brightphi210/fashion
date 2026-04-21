@@ -13,7 +13,7 @@ import {
     FiXCircle,
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
-import AddEditProductModal from "../../component/AddEditProductModal";
+import AddEditProductModal from "../../component/AddProductModal";
 import { useGetOrders, useGetProducts } from "../../hooks/mutations/allMutation";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";

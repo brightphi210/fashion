@@ -6,7 +6,7 @@ import {
     FiSearch, FiShoppingBag,
     FiTruck, FiUser, FiX,
 } from "react-icons/fi";
-import { useGetOrders, useUpdateOrderStatus } from "../../hooks/mutations/allMutation";
+import { useGetAdminOrders, useUpdateOrderStatus } from "../../hooks/mutations/allMutation";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
 
@@ -425,8 +425,9 @@ const OrderCard = ({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 const AdminOrders = () => {
-    const { orders, isLoading } = useGetOrders();
-    const allOrders: any[] = Array.isArray(orders?.data) ? orders.data : [];
+    const { adminOrders, isLoading } = useGetAdminOrders();
+    const allOrders: any[] = Array.isArray(adminOrders?.data) ? adminOrders.data : [];
+    console.log("Fetched orders:", adminOrders);
 
     const [search, setSearch] = useState("");
     const [filterStatus, setFilterStatus] = useState("all");

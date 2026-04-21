@@ -222,11 +222,12 @@ const Product = () => {
   const catLabel = product.category?.label ?? product.category ?? "";
   const catSlug = product.category?.slug ?? "";
 
-  const colors: string[] = (product.colors ?? []).map((c: any) =>
-    typeof c === "string" ? c : c.name
+  // Replace the existing colors/sizes extraction lines in Product.tsx
+  const colors: { name: string; is_available: boolean }[] = (product.colors ?? []).map((c: any) =>
+    typeof c === "string" ? { name: c, is_available: true } : { name: c.name, is_available: c.is_available ?? true }
   );
-  const sizes: string[] = (product.sizes ?? []).map((s: any) =>
-    typeof s === "string" ? s : s.name
+  const sizes: { name: string; is_available: boolean }[] = (product.sizes ?? []).map((s: any) =>
+    typeof s === "string" ? { name: s, is_available: true } : { name: s.name, is_available: s.is_available ?? true }
   );
 
   const mainImage = getMediaUrl(product.img ?? "");
@@ -242,8 +243,8 @@ const Product = () => {
     addToCart(
       { ...product, img: galleryImages[0] },
       qty,
-      selectedColor || colors[0],
-      selectedSize || sizes[0]
+      selectedColor || colors[0]?.name,
+      selectedSize || sizes[0]?.name
     );
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
@@ -351,21 +352,36 @@ const Product = () => {
                 {colors.length > 0 && (
                   <div className="mb-5">
                     <p className="text-[11px] text-[rgba(201,185,154,0.45)] mb-2 tracking-widest uppercase">
-                      Color: <span className="text-[#c9b99a]">{selectedColor || colors[0]}</span>
+                      Color: <span className="text-[#c9b99a]">{selectedColor || colors.find(c => c.is_available)?.name || colors[0].name}</span>
                     </p>
                     <div className="flex gap-2 flex-wrap">
-                      {colors.map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => setSelectedColor(color)}
-                          className={`px-3 py-1.5 text-xs font-bold tracking-widest uppercase transition-colors ${(selectedColor || colors[0]) === color
-                            ? "bg-[#c9b99a] text-[#28251e]"
-                            : "border border-[rgba(201,185,154,0.2)] text-[rgba(201,185,154,0.5)] hover:border-[rgba(201,185,154,0.5)] hover:text-[#c9b99a]"
-                            }`}
-                        >
-                          {color}
-                        </button>
-                      ))}
+                      {colors.map((color) => {
+                        const isAvail = color.is_available ?? true;
+                        const isSelected = (selectedColor || colors.find(c => c.is_available)?.name || colors[0].name) === color.name;
+                        return (
+                          <button
+                            key={color.name}
+                            onClick={() => isAvail && setSelectedColor(color.name)}
+                            disabled={!isAvail}
+                            title={!isAvail ? "Sold out" : undefined}
+                            className={`relative px-3 py-1.5 text-xs font-bold tracking-widest uppercase transition-colors overflow-hidden
+                            ${isAvail
+                                ? isSelected
+                                  ? "bg-[#c9b99a] text-[#28251e]"
+                                  : "border border-[rgba(201,185,154,0.2)] text-[rgba(201,185,154,0.5)] hover:border-[rgba(201,185,154,0.5)] hover:text-[#c9b99a]"
+                                : "border border-[rgba(201,185,154,0.1)] text-[rgba(201,185,154,0.2)] cursor-not-allowed"
+                              }`}
+                          >
+                            {/* Diagonal strikethrough for sold-out */}
+                            {!isAvail && (
+                              <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <span className="absolute w-[140%] h-[1px] bg-[rgba(201,185,154,0.35)] rotate-[-20deg]" />
+                              </span>
+                            )}
+                            {color.name}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -374,21 +390,36 @@ const Product = () => {
                 {sizes.length > 0 && (
                   <div className="mb-5">
                     <p className="text-[11px] text-[rgba(201,185,154,0.45)] mb-2 tracking-widest uppercase">
-                      Size: <span className="text-[#c9b99a]">{selectedSize || sizes[0]}</span>
+                      Size: <span className="text-[#c9b99a]">{selectedSize || sizes.find(s => s.is_available)?.name || sizes[0].name}</span>
                     </p>
                     <div className="flex gap-2 flex-wrap">
-                      {sizes.map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => setSelectedSize(size)}
-                          className={`w-10 h-8 text-xs font-bold tracking-widest transition-colors ${(selectedSize || sizes[0]) === size
-                            ? "bg-[#c9b99a] text-[#28251e]"
-                            : "border border-[rgba(201,185,154,0.2)] text-[rgba(201,185,154,0.5)] hover:border-[rgba(201,185,154,0.5)] hover:text-[#c9b99a]"
-                            }`}
-                        >
-                          {size}
-                        </button>
-                      ))}
+                      {sizes.map((size) => {
+                        const isAvail = size.is_available ?? true;
+                        const isSelected = (selectedSize || sizes.find(s => s.is_available)?.name || sizes[0].name) === size.name;
+                        return (
+                          <button
+                            key={size.name}
+                            onClick={() => isAvail && setSelectedSize(size.name)}
+                            disabled={!isAvail}
+                            title={!isAvail ? "Sold out" : undefined}
+                            className={`relative w-10 h-8 text-xs font-bold tracking-widest transition-colors overflow-hidden
+                            ${isAvail
+                                ? isSelected
+                                  ? "bg-[#c9b99a] text-[#28251e]"
+                                  : "border border-[rgba(201,185,154,0.2)] text-[rgba(201,185,154,0.5)] hover:border-[rgba(201,185,154,0.5)] hover:text-[#c9b99a]"
+                                : "border border-[rgba(201,185,154,0.1)] text-[rgba(201,185,154,0.2)] cursor-not-allowed"
+                              }`}
+                          >
+                            {/* Diagonal strikethrough for sold-out */}
+                            {!isAvail && (
+                              <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <span className="absolute w-[140%] h-[1px] bg-[rgba(201,185,154,0.35)] rotate-[-20deg]" />
+                              </span>
+                            )}
+                            {size.name}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -467,8 +498,8 @@ const Product = () => {
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   {[
                     ["Category", catLabel],
-                    ["Available Sizes", sizes.join(", ") || "—"],
-                    ["Available Colors", colors.join(", ") || "—"],
+                    ["Available Sizes", sizes.filter(s => s.is_available).map(s => s.name).join(", ") || "—"],
+                    ["Available Colors", colors.filter(c => c.is_available).map(c => c.name).join(", ") || "—"],
                   ].map(([label, val]) => (
                     <div key={label} className="bg-[rgba(201,185,154,0.06)] border border-[rgba(201,185,154,0.1)] p-3">
                       <p className="text-[10px] text-[rgba(201,185,154,0.4)] mb-1 tracking-widest uppercase">{label}</p>

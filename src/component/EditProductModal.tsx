@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { FiChevronDown, FiLoader, FiPlus, FiX } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://api.6ixunit.store";
+const API_BASE = import.meta.env.VITE_API_URL ?? "https://api.6ixunit.store";
 // const API_BASE = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 const PRESET_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL", "28", "30", "32", "34", "36", "38", "40", "One Size"];

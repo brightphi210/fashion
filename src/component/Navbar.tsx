@@ -99,7 +99,7 @@ const Navbar = () => {
           : "bg-[#100e0a] border-[#c9b99a]/10"
           }`}
       >
-        <div className="max-w-5xl mx-auto px-4 h-16 flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 h-20 flex items-center gap-4">
 
           {/* LEFT */}
           <div className="flex items-center gap-4 flex-1">
@@ -107,7 +107,7 @@ const Navbar = () => {
               <img
                 src={logo}
                 alt="Logo"
-                className="w-14 h-14 rounded-md object-cover border border-[#c9b99a]/25"
+                className="lg:w-28 w-24 rounded-md object-cover"
               />
             </Link>
 

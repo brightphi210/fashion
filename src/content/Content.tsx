@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AdminOrders from '../Pages/admin/AdminOrders'
+import BroadcastMail from '../Pages/admin/BroadCastMail'
 import Overview from '../Pages/admin/Overview'
 import Products from '../Pages/admin/Products'
 
@@ -11,7 +12,7 @@ const Content = () => {
         <Route path='/admin/overview' element={<Overview />} />
         <Route path='/admin/products' element={<Products />} />
         <Route path='/admin/orders' element={<AdminOrders />} />
-
+        <Route path='/admin/broadcast' element={<BroadcastMail />} />
       </Routes>
 
     </div>

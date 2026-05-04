@@ -1,3 +1,4 @@
+import { FiMail } from "react-icons/fi";
 import { TbAward, TbCertificate, TbLayoutDashboard } from "react-icons/tb";
 
 export const navigationLink = [
@@ -19,4 +20,11 @@ export const navigationLink = [
         path: '/admin/orders',
         icon: <TbAward />
     },
+
+    {
+        id: 4,
+        name: 'Broadcast',
+        path: '/admin/broadcast',
+        icon: <FiMail />
+    }
 ]

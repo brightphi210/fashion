@@ -167,9 +167,31 @@ export const useUpdateOrderStatus = () => {
 
 export const useNewsletterSubscribe = () => {
   const subscribe = useMutation({
-    mutationFn: async (email: string) => {
-      return post_requests('newsletter/subscribe/', { email }, '')
+    mutationFn: async (data: { name: string; email: string }) => {
+      return post_requests('newsletter/subscribe/', { name: data.name, email: data.email }, '')
     },
   })
   return subscribe
 }
+
+
+
+
+// ============ GET NEWS LETTER SUBSCRIBERS ====================
+export const useGetAdminEmailSubscribers = () => {
+  const { data, isLoading, isError, isFetched, refetch } = useQuery({
+    queryKey: ["email-subscribers"],
+    queryFn: async () => {
+      const token = (await localStorage.getItem("sxiAccessToken")) || "";
+      return get_requests("newsletter/", token);
+    },
+  });
+
+  return {
+    emailSubscribers: data,
+    isLoading,
+    isError,
+    isFetched,
+    refetch,
+  };
+};

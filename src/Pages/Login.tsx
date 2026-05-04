@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { FiMail, FiPhone, FiUser } from "react-icons/fi";
+import { FiMail, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import camo from "../assets/camo.jpg";
@@ -10,7 +10,7 @@ import Navbar from "../component/Navbar";
 import { useLogin, useRegistration } from "../hooks/mutations/auth";
 
 interface UserLoginFormData { email: string; }
-interface RegisterFormData { first_name: string; last_name: string; email: string; phone_number: string; }
+interface RegisterFormData { first_name: string; last_name: string; email: string; }
 
 type ViewMode = "login" | "register";
 
@@ -29,7 +29,7 @@ const Login = () => {
 
     const userLoginForm = useForm<UserLoginFormData>({ defaultValues: { email: "" } });
     const registerForm = useForm<RegisterFormData>({
-        defaultValues: { first_name: "", last_name: "", email: "", phone_number: "" },
+        defaultValues: { first_name: "", last_name: "", email: "" },
     });
 
     const onUserLoginSubmit = (data: UserLoginFormData) => {
@@ -71,7 +71,6 @@ const Login = () => {
                 if (err?.email) return toast.error(Array.isArray(err.email) ? err.email[0] : err.email);
                 if (err?.first_name) return toast.error(Array.isArray(err.first_name) ? err.first_name[0] : err.first_name);
                 if (err?.last_name) return toast.error(Array.isArray(err.last_name) ? err.last_name[0] : err.last_name);
-                if (err?.phone_number) return toast.error(Array.isArray(err.phone_number) ? err.phone_number[0] : err.phone_number);
                 if (err?.non_field_errors) return toast.error(err.non_field_errors[0]);
                 toast.error("Registration failed. Please try again.");
             },
@@ -113,7 +112,6 @@ const Login = () => {
                                     backgroundPosition: "center",
                                 }}
                             >
-                                {/* Tactical overlay */}
                                 <div className="absolute inset-0 opacity-30"
                                     style={{
                                         backgroundImage: `repeating-linear-gradient(45deg, rgba(201,185,154,0.03) 0px, rgba(201,185,154,0.03) 1px, transparent 1px, transparent 20px)`,
@@ -253,27 +251,6 @@ const Login = () => {
                                                         <div className="relative">
                                                             <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#c9b99a]/35" size={14} />
                                                             <input {...field} type="email" placeholder="john@example.com" autoCapitalize="none" disabled={isPending} className={`${inputClass(!!error)} pl-10`} />
-                                                        </div>
-                                                        {error && <p className="text-red-400 text-xs mt-1">{error.message}</p>}
-                                                    </div>
-                                                )}
-                                            />
-
-                                            <Controller
-                                                name="phone_number"
-                                                control={registerForm.control}
-                                                rules={{
-                                                    required: "Phone number is required",
-                                                    pattern: { value: /^\+?[0-9\s\-().]{7,20}$/, message: "Enter a valid phone number" },
-                                                }}
-                                                render={({ field, fieldState: { error } }) => (
-                                                    <div>
-                                                        <label className="block text-xs font-black text-[#c9b99a]/55 mb-1.5 tracking-widest uppercase">
-                                                            Phone Number <span className="text-red-400">*</span>
-                                                        </label>
-                                                        <div className="relative">
-                                                            <FiPhone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#c9b99a]/35" size={14} />
-                                                            <input {...field} type="tel" placeholder="+1 234 567 890" disabled={isPending} className={`${inputClass(!!error)} pl-10`} />
                                                         </div>
                                                         {error && <p className="text-red-400 text-xs mt-1">{error.message}</p>}
                                                     </div>
